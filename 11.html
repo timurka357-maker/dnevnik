@@ -1,0 +1,782 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#08090C">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Дневник">
+<meta name="robots" content="noindex">
+<title>Дневник восстановления</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;600;700&display=swap">
+<style>
+html{color-scheme:light}
+body{margin:0}
+[hidden]{display:none!important}
+
+/* Layout: одна колонка телефона. Сверху «кольца дня», ниже крупные карточки-блоки. Интерфейс монохромный, цвет только у данных: сон, активность, слабость. */
+/* Палитры: один цвет оформления (--a1) и его оттенки. Нейтральные фон и карточки слегка подкрашены им. */
+:root{
+  --a1-l:#4E7A66; --a1-d:#9FCBB4;
+  --a1:var(--a1-l); --base-bg:#F3F4F6; --base-card:#FFFFFF;
+  --bg:color-mix(in srgb,var(--a1) 6%,var(--base-bg)); --card:color-mix(in srgb,var(--a1) 2%,var(--base-card)); --card-2:color-mix(in srgb,var(--a1) 7%,var(--base-bg));
+  --ink:#101317; --muted:#6A707B; --line:color-mix(in srgb,var(--a1) 10%,#E3E5E9); --on-a1:#FFFFFF; --on-ink:#FFFFFF;
+  --a2:color-mix(in srgb,var(--a1) 62%,var(--card)); --a3:color-mix(in srgb,var(--a1) 40%,var(--card)); --a-soft:color-mix(in srgb,var(--a1) 14%,var(--card));
+  --sleep:var(--a1); --move:var(--a2); --ex:var(--a3); --weak:var(--a1); --rec:var(--a2); --bad:#B9524E;
+  --glow:color-mix(in srgb,var(--a1) 22%,transparent);
+  --f-d:"Unbounded","Onest",system-ui,sans-serif; --f-b:"Onest",-apple-system,system-ui,"Segoe UI",sans-serif;
+}
+:root[data-accent="multi"]{--a1-l:#30343B; --a1-d:#D9DDE4; --sleep:#5B5BE6; --move:#F2613F; --ex:#22A866; --weak:#E8930C; --rec:#1597B0}
+:root[data-accent="sky"]{--a1-l:#2F6F95; --a1-d:#8CC6E8}
+:root[data-accent="graphite"]{--a1-l:#30343B; --a1-d:#D9DDE4}
+@media (prefers-color-scheme: dark){:root[data-accent="multi"]:not([data-theme="light"]){--sleep:#8B8BFF; --move:#FF7A57; --ex:#3DDC8A; --weak:#FFB23E; --rec:#3CC8E0}}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --a1:var(--a1-d); --base-bg:#08090C; --base-card:#131519; --ink:#F1F3F5; --muted:#8E949E; --line:color-mix(in srgb,var(--a1) 10%,#24272E);
+  --on-a1:#0A0B0E; --on-ink:#08090C; --bad:#E0817C; --bg:color-mix(in srgb,var(--a1) 4%,var(--base-bg)); --card:color-mix(in srgb,var(--a1) 4%,var(--base-card)); --card-2:color-mix(in srgb,var(--a1) 8%,#1A1D22); color-scheme:dark}}
+:root[data-theme="dark"][data-accent="multi"]{--sleep:#8B8BFF; --move:#FF7A57; --ex:#3DDC8A; --weak:#FFB23E; --rec:#3CC8E0}
+:root[data-theme="dark"]{
+  --a1:var(--a1-d); --base-bg:#08090C; --base-card:#131519; --ink:#F1F3F5; --muted:#8E949E; --line:color-mix(in srgb,var(--a1) 10%,#24272E);
+  --on-a1:#0A0B0E; --on-ink:#08090C; --bad:#E0817C; --bg:color-mix(in srgb,var(--a1) 4%,var(--base-bg)); --card:color-mix(in srgb,var(--a1) 4%,var(--base-card)); --card-2:color-mix(in srgb,var(--a1) 8%,#1A1D22); color-scheme:dark}
+*{box-sizing:border-box}
+html,body{background:var(--bg);color:var(--ink)}
+body{font-family:var(--f-b);font-size:16px;line-height:1.4;-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.app{max-width:440px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:6px calc(104px + env(safe-area-inset-bottom,0px))}
+.num{font-variant-numeric:tabular-nums}
+.preview{font-size:12.5px;color:var(--muted);border:1px dashed var(--line);border-radius:14px;padding:8px 12px;margin:4px 0 12px}
+.preview b{color:var(--ink);font-weight:600}
+.stack{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--card);border-radius:24px;padding:16px}
+.ch{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px}
+.ch h2{margin:0;font-family:var(--f-d);font-size:16px;font-weight:600;letter-spacing:-.2px}
+.ch .aside{font-size:12.5px;color:var(--muted)}
+.sub{font-size:13px;color:var(--muted)}
+.lbl{font-size:12px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+
+/* hero */
+.hero{position:relative;overflow:hidden;background:var(--card);border-radius:28px;padding:18px 18px 16px}
+.hero::after{content:"";position:absolute;inset:-40% -30% auto auto;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,var(--glow),transparent 70%);pointer-events:none}
+.hero-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.day{font-family:var(--f-d);font-weight:700;font-size:44px;line-height:.95;letter-spacing:-1.5px}
+.day small{display:block;font-family:var(--f-b);font-size:15px;font-weight:500;letter-spacing:0;color:var(--muted);margin-top:8px}
+.streak{font-size:12.5px;font-weight:600;background:var(--card-2);padding:6px 10px;border-radius:99px;white-space:nowrap}
+.rings{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+.ring{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+.ring svg{width:84px;height:84px}
+.ring .v{font-weight:700;font-size:15px}
+.ring .l{font-size:12px;color:var(--muted);line-height:1.2}
+
+/* metrics grid */
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.m{background:var(--card-2);border-radius:16px;padding:12px}
+.m .k{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.m .k i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.m .v{font-size:20px;font-weight:700;margin-top:4px;letter-spacing:-.3px}
+.m .v span{font-size:13px;font-weight:500;color:var(--muted);margin-left:2px}
+.m .d{font-size:12px;color:var(--muted);margin-top:2px}
+.m.wide{grid-column:1/-1}
+.stages{display:flex;height:8px;border-radius:4px;overflow:hidden;margin-top:8px;gap:2px}
+.stages span{display:block;height:100%}
+.slegend{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px;font-size:11.5px;color:var(--muted)}
+.slegend i{display:inline-block;width:7px;height:7px;border-radius:2px;margin-right:4px}
+
+/* weakness scale */
+.scale-row{display:flex;flex-direction:column;gap:8px}
+.scale-row + .scale-row{margin-top:14px}
+.scale-head{display:flex;justify-content:space-between;align-items:baseline}
+.scale-head b{font-weight:600}
+.scale-head .val{font-size:13px;color:var(--muted)}
+.scale{display:grid;grid-template-columns:repeat(11,1fr);gap:4px}
+.scale button{font:inherit;font-size:14px;font-weight:600;aspect-ratio:1/1.15;max-width:100%;border:0;border-radius:10px;background:var(--card-2);color:var(--muted);cursor:pointer;padding:0}
+.scale button[aria-pressed="true"]{background:var(--weak);color:var(--on-a1);transform:scale(1.08)}
+.scale-ends{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted)}
+
+/* chips & seg */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-size:14.5px;padding:8px 13px;border-radius:99px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--a-soft);border-color:color-mix(in srgb,var(--a1) 55%,transparent);color:var(--ink);font-weight:500}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--card-2);border-radius:14px;padding:4px;gap:4px}
+.seg button{font:inherit;font-size:14.5px;border:0;background:transparent;color:var(--muted);padding:9px 4px;border-radius:10px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--card);color:var(--ink);font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.mood{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.mood button{font:inherit;border:0;background:var(--card-2);color:var(--muted);border-radius:14px;padding:10px 2px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11.5px}
+.mood svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+.mood button[aria-pressed="true"]{background:var(--a1);color:var(--on-a1)}
+
+/* rows */
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 0}
+.row + .row{border-top:1px solid var(--line)}
+.row .t{font-weight:500}
+.row .s{font-size:12.5px;color:var(--muted)}
+.row > div:first-child{min-width:0}
+.tog{width:50px;height:30px;border-radius:99px;border:0;background:var(--line);position:relative;cursor:pointer;flex:none;padding:0}
+.tog::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .15s}
+.tog[aria-pressed="true"]{background:var(--a1)}
+.tog[aria-pressed="true"]::after{left:23px}
+.check{width:28px;height:28px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;cursor:pointer;background:transparent;flex:none;padding:0}
+.check[aria-pressed="true"]{background:var(--a1);border-color:var(--a1)}
+.check svg{width:15px;height:15px;stroke:var(--on-a1);opacity:0}
+.check[aria-pressed="true"] svg{opacity:1}
+.step{display:flex;align-items:center;gap:4px;flex:none}
+.step button{width:34px;height:34px;border-radius:50%;border:0;background:var(--card-2);color:var(--ink);font-size:19px;cursor:pointer;padding:0}
+.step output{min-width:56px;text-align:center;font-weight:700;font-size:16px}
+.rec{color:var(--a1)}
+.badge{font-size:11px;font-weight:700;color:var(--a1);background:var(--a-soft);padding:2px 7px;border-radius:99px;margin-left:6px;vertical-align:1px}
+.wk{display:flex;gap:12px;align-items:center;background:var(--card-2);border-radius:16px;padding:12px}
+.wk + .wk{margin-top:8px}
+.wk .ic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;flex:none}
+.wk .ic svg{width:22px;height:22px;stroke:var(--a1);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.wk .b{flex:1;min-width:0}
+.wk .t{font-weight:600}
+.wk .s{font-size:12.5px;color:var(--muted)}
+.wk .x{display:flex;flex-direction:column;align-items:flex-end;gap:4px;font-size:12px;color:var(--muted)}
+.add{font:inherit;font-size:14.5px;font-weight:600;color:var(--ink);background:transparent;border:1px dashed var(--line);border-radius:14px;padding:11px;width:100%;margin-top:10px;cursor:pointer}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.form input{grid-column:span 1}
+.form .full{grid-column:1/-1}
+textarea,input[type=text]{width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--card-2);border:1px solid transparent;border-radius:14px;padding:11px 12px}
+textarea:focus,input[type=text]:focus{outline:none;border-color:var(--ink)}
+textarea{min-height:104px;resize:vertical}
+.btn{font:inherit;font-weight:600;font-size:16px;border:0;border-radius:18px;padding:16px;background:var(--a1);color:var(--on-a1);cursor:pointer;width:100%}
+.btn.sm{padding:11px;font-size:14.5px;border-radius:14px}
+button:focus-visible{outline:2px solid var(--a1);outline-offset:2px}
+.divider{height:1px;background:var(--line);margin:14px 0}
+
+/* tabs */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px));padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));pointer-events:none}
+.tabs-in{pointer-events:auto;max-width:420px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);background:color-mix(in srgb,var(--card) 82%,transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid var(--line);border-radius:26px;padding:6px;box-shadow:0 8px 30px rgba(0,0,0,.12)}
+.tab{border:0;background:transparent;font:inherit;font-size:10.5px;color:var(--muted);padding:7px 2px;border-radius:20px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer}
+.tab svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tab[aria-selected="true"]{color:var(--a1);background:var(--a-soft);font-weight:600}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--on-ink);padding:11px 16px;border-radius:14px;font-size:14px;z-index:30;white-space:nowrap}
+
+/* other screens */
+.h1{font-family:var(--f-d);font-weight:700;font-size:30px;letter-spacing:-.8px;line-height:1.05;margin:10px 0 14px}
+.pill{font-size:12px;font-weight:600;padding:5px 10px;border-radius:99px;background:var(--card);white-space:nowrap}
+.topline{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.entry .eh{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.entry .eh b{font-family:var(--f-d);font-size:15px;font-weight:600}
+.entry .eh span{color:var(--muted);font-size:13px}
+.entry p{margin:8px 0 10px;font-size:14.5px}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-size:12px;padding:4px 9px;border-radius:99px;background:var(--card-2);color:var(--muted)}
+.tag.w{color:var(--a1);background:var(--a-soft);font-weight:600}
+.month{font-size:12px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:6px 4px -2px}
+svg.chart{width:100%;height:auto;display:block}
+svg.chart text{fill:var(--muted);font-family:var(--f-b);font-size:10px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.ins .big{font-family:var(--f-d);font-size:18px;font-weight:600;line-height:1.25;margin:0 0 10px;text-wrap:balance;letter-spacing:-.2px}
+.bars{display:flex;flex-direction:column;gap:7px}
+.bar{display:grid;grid-template-columns:120px 1fr 30px;align-items:center;gap:8px;font-size:13px}
+.bar .track{height:10px;background:var(--card-2);border-radius:5px;overflow:hidden}
+.bar .fill{height:100%;border-radius:5px;background:var(--a1)}
+.bar .fill.c{background:var(--muted);opacity:.45}
+.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+.tbl th{text-align:left;font-weight:600;color:var(--muted);font-size:12px;padding:6px 4px;border-bottom:1px solid var(--line)}
+.tbl td{padding:9px 4px;border-bottom:1px solid var(--line)}
+.scroll{overflow-x:auto}
+.swatches{display:flex;gap:10px;flex-wrap:wrap}
+.sw{border:0;background:transparent;font:inherit;font-size:11.5px;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;padding:0}
+.sw i{width:34px;height:34px;border-radius:50%;display:block;background-size:cover;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.sw[aria-pressed="true"] i{outline:2px solid var(--ink);outline-offset:3px}
+.sw[aria-pressed="true"]{color:var(--ink);font-weight:600}
+.kg{font:inherit;font-size:12px;font-weight:600;border:0;border-radius:99px;padding:3px 9px;background:var(--a-soft);color:var(--a1);cursor:pointer;margin-left:6px;vertical-align:1px}
+.collapse{font:inherit;width:100%;border:0;background:transparent;color:var(--ink);display:flex;justify-content:space-between;align-items:center;gap:8px;padding:0;cursor:pointer;text-align:left}
+.collapse .chev{transition:transform .15s;color:var(--muted)}
+.collapse[aria-expanded="true"] .chev{transform:rotate(90deg)}
+.peek{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13.5px;color:var(--muted);margin-top:8px}
+.peek b{color:var(--ink);font-weight:600}
+@media (prefers-reduced-motion:no-preference){.screen{animation:in .2s ease-out}@keyframes in{from{opacity:.5;transform:translateY(6px)}to{opacity:1;transform:none}}.scale button{transition:transform .12s}}
+.app{padding-top:calc(env(safe-area-inset-top,0px) + 8px)}
+.h2{margin:0;font-family:var(--f-d);font-size:16px;font-weight:600;letter-spacing:-.2px}
+.datenav{display:flex;align-items:center;justify-content:space-between;margin:-4px -6px 10px;position:relative;z-index:1}
+.datenav span{font-size:13px;font-weight:600;color:var(--muted);text-transform:lowercase}
+.datenav button{width:36px;height:32px;border:0;border-radius:10px;background:var(--card-2);color:var(--ink);font-size:20px;cursor:pointer;padding:0}
+.datenav button:disabled{opacity:.3}
+button.streak{border:0;color:var(--ink);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;position:relative;z-index:1}
+.chip.add-chip{border-style:dashed;color:var(--muted)}
+.chip.sm{font-size:13px;padding:6px 10px}
+.inline{display:flex;gap:8px;align-items:center;margin-top:10px}
+.inline input{flex:1;min-width:0}
+.del{border:0;background:transparent;color:var(--muted);font-size:22px;line-height:1;cursor:pointer;padding:2px 6px}
+.rowbtn{width:100%;border:0;background:transparent;font:inherit;color:inherit;text-align:left;cursor:pointer}
+label.rowbtn{cursor:pointer}
+.empty{color:var(--muted);font-size:14.5px}
+.empty .big{font-family:var(--f-d);font-size:18px;font-weight:600;color:var(--ink);line-height:1.25}
+.backbtn{border:0;background:transparent;font:inherit;font-size:15px;color:var(--a1);padding:6px 0;cursor:pointer;margin-top:4px}
+.code{display:block;font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--card-2);padding:10px;border-radius:10px;word-break:break-all;user-select:all}
+.btn.ghost{background:var(--card-2);color:var(--ink)}
+.btn.danger{background:var(--bad);color:#fff}
+button.entry{display:block;width:100%;text-align:left;border:0;font:inherit;color:inherit;cursor:pointer}
+input[type=search],input[type=password],input[type=date],.hin{width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--card-2);border:1px solid transparent;border-radius:14px;padding:11px 12px}
+.hin{background:var(--card);padding:6px 8px;margin:4px 0 2px;font-weight:700;font-size:18px;border-radius:10px}
+label.m{display:block}
+.wk .ic{background:var(--a-soft)}
+.mtag{font-size:10.5px;font-weight:600;color:var(--a1);background:var(--a-soft);padding:1px 6px;border-radius:99px;margin-left:4px}
+.wk .x{flex-direction:row;align-items:center;gap:6px}
+.form .seg,.form .chips{grid-column:1/-1}
+#lock{position:fixed;inset:0;background:var(--bg);z-index:50;display:grid;place-items:center;padding:24px}
+.lock-in{width:100%;max-width:300px}
+.dots{display:flex;justify-content:center;gap:16px;margin:18px 0 28px}
+.dots i{width:14px;height:14px;border-radius:50%;border:2px solid var(--ink)}
+.dots i.on{background:var(--ink)}
+.dots.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.pad button{aspect-ratio:1;border-radius:50%;border:0;background:var(--card);color:var(--ink);font:inherit;font-size:26px;cursor:pointer}
+
+</style>
+</head>
+<body>
+<div class="app"><main id="screen"></main></div>
+<nav class="tabs" aria-label="Разделы"><div class="tabs-in" role="tablist" id="tabs"></div></nav>
+<div class="toast" id="toast" hidden></div>
+<div id="lock" hidden></div>
+<script>
+'use strict';
+/* ===== Дневник восстановления · данные хранятся только на этом устройстве (IndexedDB) ===== */
+const APP_VERSION = '1.2';
+const MON=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+const MONN=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+const WD=['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'], WDS=['вс','пн','вт','ср','чт','пт','сб'];
+const DAY=864e5;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const dec=v=>String(v).replace('.',',');
+const nf=n=>Math.round(n).toLocaleString('ru-RU');
+const pd=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const todayISO=()=>iso(new Date());
+const addDays=(s,n)=>iso(new Date(pd(s).getTime()+n*DAY+12*36e5));
+const daysBetween=(a,b)=>Math.round((pd(b)-pd(a))/DAY);
+const fmtSleep=h=>{const m=Math.round(h*60);return `${Math.floor(m/60)} ч ${String(m%60).padStart(2,'0')} мин`};
+const fmtHM=h=>{const m=Math.round(h*60);return `${Math.floor(m/60)}:${String(m%60).padStart(2,'0')}`};
+const fmtSec=s=>s>=60?`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`:`${s} с`;
+const parseNum=v=>{if(v==null||v==='')return null;const n=parseFloat(String(v).replace(',','.').replace(/[^\d.\-]/g,''));return isFinite(n)?n:null};
+const parseSleep=v=>{if(v==null||v==='')return null;const s=String(v).trim();let m=s.match(/^(\d+)\s*[:ч.]\s*(\d{1,2})/);if(m)return +m[1]+ +m[2]/60;return parseNum(s)};
+const plural=(n,a,b,c)=>{const m=n%10,h=n%100;return m===1&&h!==11?a:m>=2&&m<=4&&(h<10||h>=20)?b:c};
+const avg=a=>a.length?a.reduce((s,v)=>s+v,0)/a.length:null;
+const uid=()=>Math.random().toString(36).slice(2,9);
+
+/* ---------- storage ---------- */
+const DB={db:null,
+  open(){return new Promise((res,rej)=>{const r=indexedDB.open('dnevnik',1);r.onupgradeneeded=()=>{const d=r.result;if(!d.objectStoreNames.contains('entries'))d.createObjectStore('entries',{keyPath:'date'});if(!d.objectStoreNames.contains('kv'))d.createObjectStore('kv')};r.onsuccess=()=>{this.db=r.result;res()};r.onerror=()=>rej(r.error)})},
+  req(r){return new Promise((res,rej)=>{r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})},
+  st(n,m){return this.db.transaction(n,m).objectStore(n)},
+  all(){return this.req(this.st('entries','readonly').getAll())},
+  put(e){return this.req(this.st('entries','readwrite').put(e))},
+  del(d){return this.req(this.st('entries','readwrite').delete(d))},
+  clear(){return Promise.all([this.req(this.st('entries','readwrite').clear()),this.req(this.st('kv','readwrite').clear())])},
+  get(k){return this.req(this.st('kv','readonly').get(k))},
+  set(k,v){return this.req(this.st('kv','readwrite').put(v,k))},
+};
+const DEFAULTS={
+  start:'2026-06-09', accent:'graphite',
+  meds:[{id:'vitd',n:'Витамин D (АкваДетрим)',d:'2000 МЕ · утро',active:true},{id:'mg',n:'Магний бисглицинат',d:'200 мг · вечер',active:true}],
+  exercises:[
+    {id:'plank',n:'Планка',u:'s',step:5,active:true},{id:'hang',n:'Вис на турнике',u:'s',step:5,active:true},
+    {id:'squat',n:'Приседания',u:'n',step:5,active:true},{id:'push',n:'Отжимания',u:'n',step:1,active:true},
+    {id:'pushk',n:'Отжимания с колен',u:'n',step:1,active:false},
+    {id:'kb_swing',n:'Гиря, мах',u:'n',step:5,kg:6,active:true},{id:'kb_lift',n:'Гиря, подъём на руку',u:'n',step:1,kg:6,active:true},
+    {id:'abs',n:'Пресс',u:'n',step:5,active:false}],
+  causes:['Руль','Работа руками','Гиря, турник','Гребля','Долгая ходьба','Недосып','Стресс','Холод','Простуда','Не знаю'],
+  dayTypes:['Рабочий день','Выходной','Командировка','Дорога','Природа, поход','Рыбалка','Праздник','Баня'],
+  symptoms:['Насморк','Горло','Кашель','Ломота','Головная боль','Слабость во всём теле'],
+  sober:{alc:'2025-12-28',smoke:'2026-01-30'},
+  goals:{sleep:7.5,steps:10000,exmin:30},
+  pin:null, lastExport:null,
+};
+let S=structuredClone(DEFAULTS);   // settings
+const E=new Map();                  // date -> entry
+const ui={tab:'today',date:todayISO(),watchOpen:false,editHealth:false,addEx:false,exU:'раз',addMed:false,addWk:false,wkT:'Бег',addCause:false,kgOpen:{},q:'',period:'month',chartEx:'plank',exportP:'all',confirmWipe:false,badge:0,manage:null};
+
+async function saveSettings(){await DB.set('settings',S)}
+const saveTimers={};
+function saveEntry(e){e.updated=Date.now();E.set(e.date,e);clearTimeout(saveTimers[e.date]);saveTimers[e.date]=setTimeout(()=>DB.put(e).catch(err=>toast('Не удалось сохранить: '+err.message)),250)}
+function entry(date){return E.get(date)||{date,health:{},ex:{},workouts:[],causes:[],dayType:[],sym:[],meds:{}}}
+function norm(e){e.health??={};e.ex??={};e.workouts??=[];e.causes??=[];e.dayType??=[];e.sym??=[];e.meds??={};return e}
+const hasContent=e=>e&&(e.note||e.arms!=null||e.legs!=null||Object.keys(e.health||{}).length||Object.keys(e.ex||{}).length||(e.workouts||[]).length||e.mood);
+const dayN=date=>daysBetween(S.start,date)+1;
+
+/* ---------- helpers ---------- */
+function toast(t){const el=$('toast');el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2400)}
+const CHECK='<svg viewBox="0 0 24 24" fill="none" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+const h2=t=>`<h2 class="h2">${t}</h2>`;
+const weakWord=v=>['нет','почти нет','лёгкая','лёгкая','заметная','заметная','мешает','мешает','сильная','сильная','как в худшие дни'][v];
+const fmtEx=(x,v)=>x.u==='s'?fmtSec(v):x.u==='m'?`${v} м`:String(v);
+const exById=id=>S.exercises.find(x=>x.id===id)||{id,n:id,u:'n',step:1};
+const PALETTES=[['graphite','Графит','#30343B','#D9DDE4'],['sage','Шалфей','#4E7A66','#9FCBB4'],['sky','Море','#2F6F95','#8CC6E8'],['multi','Цветной','conic-gradient(#5B5BE6 0 25%,#F2613F 0 50%,#22A866 0 75%,#E8930C 0)','conic-gradient(#8B8BFF 0 25%,#FF7A57 0 50%,#3DDC8A 0 75%,#FFB23E 0)']];
+const isDark=()=>matchMedia('(prefers-color-scheme: dark)').matches;
+const swatches=()=>`<div class="swatches">${PALETTES.map(([k,l,a,b])=>`<button class="sw" data-accent="${k}" aria-pressed="${S.accent===k}"><i style="background:${isDark()?b:a}"></i>${l}</button>`).join('')}</div>`;
+function applyAccent(){document.documentElement.dataset.accent=S.accent;const m=document.querySelector('meta[name=theme-color]');if(m)m.content=getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()||'#08090C'}
+const chip=(attr,val,on,extra='')=>`<button class="chip" ${attr}="${esc(val)}" aria-pressed="${on}" ${extra}>${esc(val)}</button>`;
+const MOODS=[['плохо','M8 16c1.2-1.5 2.5-2 4-2s2.8.5 4 2'],['так себе','M8.5 15.5h7'],['норм','M8.5 15c1 .8 2.2 1.2 3.5 1.2s2.5-.4 3.5-1.2'],['хорошо','M8 14.5c1.1 1.6 2.4 2.3 4 2.3s2.9-.7 4-2.3'],['отлично','M7.5 13.5h9c-.6 2.4-2.4 3.8-4.5 3.8s-3.9-1.4-4.5-3.8z']];
+const face=m=>`<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="10" r=".6" fill="currentColor"/><circle cx="15" cy="10" r=".6" fill="currentColor"/><path d="${m}"/></svg>`;
+const WK={walk:['Прогулка','<circle cx="13" cy="4.5" r="1.6"/><path d="M10 21l2-6 3 3v3M9 11l3-3 3 3 2 1M12 8l-1 5"/>'],run:['Бег','<circle cx="14" cy="4.5" r="1.6"/><path d="M7 21l3-5 3 2 1 3M8 12l3-3 4 1 2 3M11 9l-1 5"/>'],swim:['Бассейн','<path d="M3 17c2 0 2-1.5 4.5-1.5S10 17 12 17s2.5-1.5 4.5-1.5S19 17 21 17"/><circle cx="16" cy="7" r="1.6"/><path d="M6 13l4-4 3 2 3-1"/>'],bike:['Велосипед','<circle cx="6" cy="16" r="3.5"/><circle cx="18" cy="16" r="3.5"/><path d="M6 16l4-7h5l3 7M10 9l2 7"/>'],gym:['Силовая','<path d="M4 12h16M7 8v8M17 8v8M4 10v4M20 10v4"/>'],ski:['Лыжи','<circle cx="14" cy="4.5" r="1.6"/><path d="M4 20l16-4M9 17l3-6 3 2M12 11l2-3"/>'],other:['Другое','<circle cx="12" cy="12" r="7"/><path d="M12 8v4l2 2"/>']};
+const WK_TYPES=[['walk','Прогулка'],['run','Бег'],['swim','Бассейн'],['bike','Велосипед'],['gym','Силовая'],['ski','Лыжи'],['other','Другое']];
+const ARM_CAUSES=['Руль','Работа руками','Гиря, турник','Гребля'];
+
+function ring(val,max,color,label,sub){
+  const r=34,c=2*Math.PI*r,p=val==null?0:Math.min(val/max,1);
+  return `<div class="ring"><svg viewBox="0 0 84 84" aria-hidden="true"><circle cx="42" cy="42" r="${r}" fill="none" stroke="${color}" stroke-opacity=".16" stroke-width="9"/>${p?`<circle cx="42" cy="42" r="${r}" fill="none" stroke="${color}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${(c*p).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 42 42)"/>`:''}</svg><div class="v num">${label}</div><div class="l">${sub}</div></div>`;
+}
+function scale(e,key,title){
+  const v=e[key];
+  return `<div class="scale-row"><div class="scale-head"><b>${title}</b><span class="val num">${v==null?'не отмечено':`${v} · ${weakWord(v)}`}</span></div>
+  <div class="scale" role="radiogroup" aria-label="${title}">${Array.from({length:11},(_,i)=>`<button role="radio" data-scale="${key}" data-v="${i}" aria-pressed="${i===v}" aria-checked="${i===v}">${i}</button>`).join('')}</div></div>`;
+}
+
+/* ---------- stats ---------- */
+function streak(){let d=todayISO();if(!hasContent(E.get(d)))d=addDays(d,-1);let n=0;while(hasContent(E.get(d))){n++;d=addDays(d,-1)}return n}
+function exHistory(id,before,kg){
+  let last=null,lastDate=null,best=0;
+  for(const [d,e] of E){const x=e.ex?.[id];if(!x||!x.v||d===before)continue;
+    if(kg==null||x.kg==null||x.kg===kg)best=Math.max(best,x.v);
+    if(d<before&&(!lastDate||d>lastDate)){lastDate=d;last=x}}
+  return{last,best};
+}
+function prevWaist(before){let best=null;for(const[d,e]of E)if(e.waist&&d<before&&(!best||d>best.d))best={d,v:e.waist};return best}
+function weightWeekDelta(date){const e=E.get(date);if(!e?.health?.w)return null;let ref=null;for(let i=6;i<=9;i++){const p=E.get(addDays(date,-i));if(p?.health?.w){ref=p.health.w;break}}return ref==null?null:e.health.w-ref}
+
+/* ---------- screens ---------- */
+const BADGES=()=>{const t=todayISO(),s=streak();const a=daysBetween(S.sober.alc,t),c=daysBetween(S.sober.smoke,t);
+  return[`${s} ${plural(s,'день','дня','дней')} подряд`,`${a} ${plural(a,'день','дня','дней')} без алкоголя`,`${c} ${plural(c,'день','дня','дней')} без сигарет`]};
+
+function today(){
+  const d=ui.date,e=norm(entry(d)),h=e.health,n=dayN(d),dt=pd(d),isToday=d===todayISO();
+  const prev=E.get(addDays(d,-1)),sickUp=e.sick||prev?.sick;
+  const b=BADGES();
+  const hero=`<section class="hero">
+    <div class="datenav"><button data-nav="-1" aria-label="Предыдущий день">‹</button><span>${isToday?'сегодня':WD[dt.getDay()]}</span><button data-nav="1" aria-label="Следующий день" ${isToday?'disabled':''}>›</button></div>
+    <div class="hero-top"><div class="day num">День ${n}<small>${WD[dt.getDay()]}, ${dt.getDate()} ${MON[dt.getMonth()]}</small></div><button class="streak num" data-badge>${b[ui.badge%3]}</button></div>
+    <div class="rings">${ring(h.sl,S.goals.sleep,'var(--sleep)',h.sl!=null?fmtHM(h.sl):'—',`сон<br>цель ${fmtHM(S.goals.sleep)}`)}${ring(h.steps,S.goals.steps,'var(--move)',h.steps!=null?nf(h.steps):'—',`шагов<br>${h.km!=null?dec(h.km)+' км':'цель '+nf(S.goals.steps)}`)}${ring(h.exmin,S.goals.exmin,'var(--ex)',h.exmin!=null?h.exmin+' мин':'—',`упражнения<br>цель ${S.goals.exmin}`)}</div>
+  </section>`;
+  const peek=[h.sl!=null&&`сон <b>${fmtHM(h.sl)}${h.sq!=null?' · '+h.sq:''}</b>`,h.rhr!=null&&`пульс <b>${h.rhr}</b>`,h.hrv!=null&&`ВСР <b>${h.hrv}</b>`,h.wtemp!=null&&`t° <b>${h.wtemp>0?'+':''}${dec(h.wtemp)}</b>`,h.w!=null&&`вес <b>${dec(h.w)}</b>`].filter(Boolean);
+  const wd=weightWeekDelta(d);
+  const mk=k=>h.manual?.[k]?' <span class="mtag">исправлено</span>':'';
+  const tile=(k,label,val,unit,sub,inputVal,mode='decimal')=>ui.editHealth?`<label class="m"><span class="k">${label}</span><input class="hin" data-h="${k}" inputmode="${mode}" value="${esc(inputVal??'')}" placeholder="—"><span class="d">${unit}</span></label>`:`<div class="m"><div class="k">${label}${mk(k)}</div><div class="v num">${val??'—'}${val!=null&&unit?`<span>${unit}</span>`:''}</div>${sub?`<div class="d">${sub}</div>`:''}</div>`;
+  const stages=h.deep!=null||h.rem!=null||h.core!=null;
+  const watch=`<section class="card"><button class="collapse" data-watch aria-expanded="${ui.watchOpen}">${h2('Apple Watch')}<span class="sub">${h.src?esc(h.src):Object.keys(h).length?'из заметок':'нет данных'} <span class="chev" aria-hidden="true">›</span></span></button>
+    ${ui.watchOpen?`<div class="mgrid" style="margin-top:12px">
+      ${ui.editHealth?`<label class="m"><span class="k">Сон, ч:мин</span><input class="hin" data-h="sl" inputmode="text" value="${h.sl!=null?fmtHM(h.sl):''}" placeholder="6:49"><span class="d">длительность</span></label>`+tile('sq','Оценка сна',0,'0–100','',h.sq,'numeric'):
+       `<div class="m wide"><div class="k">Сон${h.sq!=null?' · оценка '+h.sq:''}${mk('sl')}</div><div class="v num">${h.sl!=null?fmtSleep(h.sl):'—'}${h.bed?`<span>${esc(h.bed)} → ${esc(h.wake||'')}</span>`:''}</div>
+        ${stages?`<div class="stages"><span style="flex:${h.deep||0};background:var(--sleep)"></span><span style="flex:${h.rem||0};background:var(--rec)"></span><span style="flex:${h.core||0};background:var(--ex)"></span><span style="flex:${h.awake||0};background:var(--line)"></span></div><div class="slegend num"><span><i style="background:var(--sleep)"></i>глубокий ${h.deep??'—'} мин</span><span><i style="background:var(--rec)"></i>REM ${h.rem??'—'} мин</span><span><i style="background:var(--ex)"></i>базовый ${h.core??'—'} мин</span><span><i style="background:var(--line)"></i>пробуждения ${h.awake??'—'} мин</span></div>`:''}
+        ${h.slNote?`<div class="d">${esc(h.slNote)}</div>`:''}</div>`}
+      ${tile('steps','Шаги',h.steps!=null?nf(h.steps):null,'',h.km!=null?dec(h.km)+' км':'',h.steps,'numeric')}
+      ${tile('km','Дистанция',h.km!=null?dec(h.km):null,'км','',h.km)}
+      ${tile('w','Вес утром',h.w!=null?dec(h.w):null,'кг',wd!=null?`${wd>0?'+':'−'}${dec(Math.abs(wd).toFixed(2))} за неделю`:'',h.w)}
+      ${tile('rhr','Пульс покоя',h.rhr,'уд/мин','',h.rhr,'numeric')}
+      ${tile('hrv','Вариабельность',h.hrv,'мс','',h.hrv,'numeric')}
+      ${tile('wtemp','Температура запястья',h.wtemp!=null?(h.wtemp>0?'+':'')+dec(h.wtemp):null,'°C','от обычной ночи',h.wtemp,'text')}
+      ${tile('resp','Дыхание ночью',h.resp!=null?dec(h.resp):null,'/мин','',h.resp)}
+      ${tile('kcal','Активные калории',h.kcal,'ккал','',h.kcal,'numeric')}
+      ${tile('exmin','Упражнения',h.exmin,'мин','',h.exmin,'numeric')}
+    </div><button class="add" data-edithealth>${ui.editHealth?'Готово':'Исправить вручную'}</button>${ui.editHealth?'<div class="sub" style="margin-top:8px">Исправленные поля Команда больше не перезапишет. Чтобы вернуть данные из «Здоровья», очисти поле и вставь заново.</div>':''}`:`<div class="peek num">${peek.length?peek.map(p=>`<span>${p}</span>`).join(''):'<span>Запусти Команду «Записать день» или впиши вручную</span>'}</div>`}
+    <button class="add" data-pastehealth>Вставить из «Здоровья»</button>
+    ${ui.pasteBox?`<div class="inline"><input type="text" id="pasteIn" placeholder="Вставь сюда текст из Команды"><button class="btn sm" data-pasteok style="width:auto">Готово</button></div>`:''}
+  </section>`;
+  const allCauses=[...new Set([...S.causes,...e.causes])];
+  const weak=`<section class="card"><div class="ch">${h2('Слабость за день')}<span class="aside">0 — нет · 10 — худшие дни</span></div>
+    ${scale(e,'arms','Руки')}${scale(e,'legs','Ноги, походка')}
+    <div class="divider"></div><div class="lbl" style="margin-bottom:10px">Что могло повлиять</div>
+    <div class="chips">${allCauses.map(c=>chip('data-cause',c,e.causes.includes(c))).join('')}${ui.addCause?'':'<button class="chip add-chip" data-addcause>+ своё</button>'}</div>
+    ${ui.addCause?`<div class="inline"><input type="text" id="causeIn" placeholder="Например: таскал мебель" enterkeyhint="done"><button class="btn sm" data-causesave style="width:auto">Добавить</button></div>`:''}
+    ${e.causes.includes('Руль')?`<div class="row" style="padding-bottom:0;margin-top:6px"><div><div class="t">За рулём</div><div class="s">часов за день</div></div><div class="step"><button data-drive="-1" aria-label="Меньше">−</button><output class="num">${e.drive??0} ч</output><button data-drive="1" aria-label="Больше">+</button></div></div>`:''}
+  </section>`;
+  const mood=`<section class="card"><div class="ch">${h2('Самочувствие')}<span class="aside">в целом за день</span></div>
+    <div class="mood">${MOODS.map(([l,m],i)=>`<button data-mood="${i+1}" aria-pressed="${e.mood===i+1}">${face(m)}${l}</button>`).join('')}</div></section>`;
+  const exList=S.exercises.filter(x=>x.active||e.ex[x.id]);
+  const exRows=exList.map(x=>{const cur=e.ex[x.id]||{};const kg=cur.kg??x.kg;const {last,best}=exHistory(x.id,d,kg);const v=cur.v||0;const rec=v&&best&&v>best;
+    return `<div class="row"><div><div class="t">${esc(x.n)}${kg!=null?`<button class="kg" data-kg="${x.id}">${dec(kg)} кг</button>`:''}${rec?'<span class="badge">рекорд</span>':''}</div><div class="s num">${last?`прошлый ${fmtEx(x,last.v)}`:'ещё не было'}${best?` · лучший ${fmtEx(x,best)}`:''}</div></div><div class="step"><button data-ex="${x.id}" data-d="-1" aria-label="Меньше">−</button><output class="num ${rec?'rec':''}">${v?fmtEx(x,v):'—'}</output><button data-ex="${x.id}" data-d="1" aria-label="Больше">+</button></div></div>
+    ${ui.kgOpen[x.id]?`<div class="row" style="border-top:0;padding-top:0"><div class="s">Вес снаряда. Рекорды считаются отдельно для каждого веса.</div><div class="step"><button data-kgd="${x.id}" data-d="-1" aria-label="Легче">−</button><output class="num">${dec(kg)} кг</output><button data-kgd="${x.id}" data-d="1" aria-label="Тяжелее">+</button></div></div>`:''}`}).join('');
+  const train=`<section class="card"><div class="ch">${h2('Тренировки')}<span class="aside">нажми на вес, чтобы сменить</span></div>
+    <div class="lbl" style="margin-bottom:8px">Зарядка</div>
+    <div class="seg">${['сделана','частично','пропущена'].map(s=>`<button data-charge="${s}" aria-pressed="${e.charge===s}">${s}</button>`).join('')}</div>
+    <div style="margin-top:6px">${exRows}</div>
+    ${ui.addEx?`<div class="form"><input type="text" class="full" id="exName" placeholder="Упражнение: выпады, гантели…"><div class="seg full">${['раз','секунды'].map(u=>`<button data-exu="${u}" aria-pressed="${ui.exU===u}">${u}</button>`).join('')}</div><input type="text" inputmode="decimal" id="exKg" placeholder="Вес, кг (если есть)" class="full"><button class="btn sm full" data-exsave>Добавить упражнение</button></div>`:`<button class="add" data-addex>+ Добавить упражнение</button>`}
+    <div class="divider"></div><div class="lbl" style="margin-bottom:10px">Тренировки за день</div>
+    ${e.workouts.map((w,i)=>`<div class="wk"><div class="ic"><svg viewBox="0 0 24 24">${(WK[w.type]||WK.other)[1]}</svg></div><div class="b"><div class="t">${esc(w.t||(WK[w.type]||WK.other)[0])}</div><div class="s num">${esc([w.dist,w.time,w.pace].filter(Boolean).join(' · ')||w.detail||'')}${w.type==='walk'&&w.run?` · бег ${w.runM||0} м`:''}</div>
+      ${w.type==='walk'&&w.run?`<div class="inline" style="margin-top:6px"><input type="text" inputmode="numeric" data-runm="${i}" value="${w.runM||''}" placeholder="метров бега" style="width:130px"></div>`:''}</div>
+      <div class="x">${w.type==='walk'?`бег<button class="tog" data-run="${i}" aria-pressed="${!!w.run}" aria-label="Был бег"></button>`:esc(w.src||'')}<button class="del" data-delwk="${i}" aria-label="Удалить">×</button></div></div>`).join('')}
+    ${ui.addWk?`<div class="form"><div class="chips full">${WK_TYPES.map(([k,l])=>`<button class="chip" data-wkt="${k}" aria-pressed="${ui.wkT===k}">${l}</button>`).join('')}</div><input type="text" id="wkDist" placeholder="Дистанция: 5 км"><input type="text" id="wkTime" placeholder="Время: 45 мин"><button class="btn sm full" data-wksave>Добавить тренировку</button></div>`:`<button class="add" data-addwk>+ Добавить тренировку</button>`}
+  </section>`;
+  const meds=S.meds.filter(m=>m.active||e.meds[m.id]!=null);
+  const medsC=`<section class="card"><div class="ch">${h2('Препараты')}<span class="aside num">${meds.filter(m=>e.meds[m.id]).length} из ${meds.length}</span></div>
+    ${e.medsNote?`<div class="sub" style="margin-bottom:4px">Из старой записи: ${esc(e.medsNote)}</div>`:''}
+    ${meds.map(m=>`<div class="row"><div><div class="t">${esc(m.n)}</div><div class="s">${esc(m.d)}</div></div><button class="check" data-med="${m.id}" aria-pressed="${!!e.meds[m.id]}" aria-label="${esc(m.n)}">${CHECK}</button></div>`).join('')}
+    ${ui.addMed?`<div class="form"><input type="text" class="full" id="medName" placeholder="Название"><input type="text" id="medDose" placeholder="Доза"><input type="text" id="medTime" placeholder="Когда: утро, вечер"><button class="btn sm full" data-medsave>Добавить в список</button></div><div class="sub" style="margin-top:8px">Перед новым препаратом спроси Claude о совместимости: в профиле есть запрет на высокий B6.</div>`:`<button class="add" data-addmed>+ Добавить препарат</button>`}
+  </section>`;
+  const dayType=`<section class="card"><div class="ch">${h2('Какой был день')}</div><div class="chips">${[...new Set([...S.dayTypes,...e.dayType])].map(t=>chip('data-daytype',t,e.dayType.includes(t))).join('')}</div></section>`;
+  const stool=`<section class="card"><div class="ch">${h2('Стул')}</div><div class="seg">${['норма','жидкий','твёрдый'].map(s=>`<button data-stool="${s}" aria-pressed="${e.stool===s}">${s}</button>`).join('')}</div>${e.stoolNote?`<div class="sub" style="margin-top:8px">${esc(e.stoolNote)}</div>`:''}</section>`;
+  const note=`<section class="card"><div class="ch">${h2('Мысли и заметки')}</div><textarea id="note" aria-label="Мысли и заметки" placeholder="Как прошёл день, что радовало, что беспокоило">${esc(e.note||'')}</textarea></section>`;
+  const sick=`<section class="card"><div class="row" style="padding:0"><div>${h2('Болезнь')}<div class="s">${prev?.sick&&!e.sick?'вчера отмечал — как сегодня?':'простуда, недомогание, температура'}</div></div><button class="tog" data-sick aria-pressed="${!!e.sick}" aria-label="Болею"></button></div>
+    ${e.sick?`<div style="margin-top:14px"><div class="chips">${S.symptoms.map(s=>chip('data-sym',s,e.sym.includes(s))).join('')}</div><div class="row" style="padding-bottom:0"><div class="t">Температура</div><input type="text" inputmode="decimal" id="temp" placeholder="36,6" value="${esc(e.temp??'')}" style="width:96px;text-align:center"></div></div>`:''}</section>`;
+  const pw=prevWaist(d);
+  const waist=`<section class="card"><div class="row" style="padding:0"><div>${h2('Обхват живота')}<div class="s">раз в неделю${pw?` · прошлый ${dec(pw.v)} см, ${pd(pw.d).getDate()} ${MON[pd(pw.d).getMonth()]}`:''}</div></div><input type="text" inputmode="decimal" id="waist" placeholder="см" value="${esc(e.waist??'')}" style="width:86px;text-align:center"></div></section>`;
+  const blocks=[hero,watch,weak,...(sickUp?[sick]:[]),mood,train,medsC,dayType,stool,note,...(sickUp?[]:[sick]),waist];
+  return blocks.join('')+`<button class="btn" data-save>Сохранить день ${n}</button>`;
+}
+
+function tagsFor(e){const h=e.health||{},t=[];
+  if(e.arms!=null||e.legs!=null)t.push(`<span class="tag w num">руки ${e.arms??'—'} · ноги ${e.legs??'—'}</span>`);
+  if(e.sick)t.push('<span class="tag" style="color:var(--bad)">болел</span>');
+  if(h.sl)t.push(`<span class="tag num">сон ${fmtSleep(h.sl)}${h.sq!=null?' · '+h.sq:''}</span>`);
+  if(h.w)t.push(`<span class="tag num">${dec(h.w)} кг</span>`);
+  if(h.steps)t.push(`<span class="tag num">${nf(h.steps)} шагов</span>`);
+  for(const[id,x]of Object.entries(e.ex||{}))if(x.v){const d=exById(id);t.push(`<span class="tag num">${esc(d.n.toLowerCase())} ${fmtEx(d,x.v)}${x.kg?' · '+dec(x.kg)+' кг':''}</span>`)}
+  for(const w of e.workouts||[])t.push(`<span class="tag">${esc((w.t||'').toLowerCase())}${w.dist?' '+esc(w.dist):''}</span>`);
+  for(const c of e.causes||[])t.push(`<span class="tag">${esc(c.toLowerCase())}${c==='Руль'&&e.drive?' '+e.drive+' ч':''}</span>`);
+  return t.join('');
+}
+function diary(){
+  const q=ui.q.trim().toLowerCase();
+  let list=[...E.values()].filter(hasContent).sort((a,b)=>b.date.localeCompare(a.date));
+  if(q)list=list.filter(e=>[e.note,...(e.causes||[]),...(e.dayType||[]),...(e.sym||[]),...(e.workouts||[]).map(w=>w.t)].join(' ').toLowerCase().includes(q));
+  let h=`<div class="topline"><div class="h1">Дневник</div><span class="pill num">${list.length} ${plural(list.length,'запись','записи','записей')}</span></div>
+  <input type="search" id="search" placeholder="Поиск: простуда, руль, бассейн" aria-label="Поиск по дневнику" value="${esc(ui.q)}" style="margin-bottom:12px;background:var(--card)"><div class="stack">`;
+  if(!list.length)h+=`<div class="card empty">${q?'Ничего не нашлось.':'Записей пока нет. Начни с вкладки «Сегодня» или загрузи старые записи в разделе «Ещё».'}</div>`;
+  let cm='';
+  for(const e of list.slice(0,ui.limit||60)){const d=pd(e.date),key=e.date.slice(0,7);if(key!==cm){cm=key;h+=`<div class="month">${MONN[d.getMonth()]} ${d.getFullYear()}</div>`}
+    h+=`<button class="card entry" data-open="${e.date}"><div class="eh"><b class="num">День ${dayN(e.date)}</b><span>${d.getDate()} ${MON[d.getMonth()]}, ${WDS[d.getDay()]}</span></div>${e.note?`<p>${esc(e.note)}</p>`:''}<div class="tags">${tagsFor(e)}</div></button>`}
+  if(list.length>(ui.limit||60))h+=`<button class="add" data-more>Показать ещё</button>`;
+  return h+'</div>';
+}
+
+/* ---------- charts ---------- */
+const PERIODS=[['day','День'],['week','Неделя'],['month','Месяц'],['q','3 мес'],['all','Всё']];
+const PDAYS={week:7,month:30,q:91};
+function xTicks(x0,x1){const days=(x1-x0)/DAY,r=[];
+  if(days>45){const d=new Date(x0);d.setDate(1);d.setMonth(d.getMonth()+1);while(d.getTime()<=x1){r.push({x:d.getTime(),t:MONN[d.getMonth()].slice(0,3).toLowerCase()});d.setMonth(d.getMonth()+1)}return r}
+  const step=days>10?7:1;for(let t=x0;t<=x1+1;t+=step*DAY){const d=new Date(t);r.push({x:t,t:days>10?`${d.getDate()}.${String(d.getMonth()+1).padStart(2,'0')}`:WDS[d.getDay()]})}return r}
+function niceRange(vals,step,pad=0){const lo=Math.floor((Math.min(...vals)-pad)/step)*step,hi=Math.ceil((Math.max(...vals)+pad)/step)*step||step;const t=[];for(let v=lo;v<=hi+1e-9;v+=step)t.push(+v.toFixed(2));return{yMin:lo,yMax:hi===lo?lo+step:hi,ticks:t}}
+function chart({series,x0,x1,yMin,yMax,ticks,fmt,bands=[],marks=[],w=360,h=160}){
+  const L=32,R=8,T=10,B=22,W=w-L-R,H=h-T-B,X=x=>L+(x1===x0?W/2:(x-x0)/(x1-x0)*W),Y=y=>T+H-(y-yMin)/(yMax-yMin)*H;
+  let s=`<svg class="chart" viewBox="0 0 ${w} ${h}" role="img">`;
+  const bw=Math.max(2,W/Math.max(1,(x1-x0)/DAY+1));
+  for(const b of bands)s+=`<rect x="${X(b.x)-bw/2}" y="${T}" width="${bw}" height="${H}" fill="var(--bad)" fill-opacity=".12"/>`;
+  for(const t of ticks)s+=`<line x1="${L}" x2="${w-R}" y1="${Y(t)}" y2="${Y(t)}" stroke="var(--line)"/><text x="${L-5}" y="${Y(t)+3}" text-anchor="end">${fmt(t)}</text>`;
+  for(const xl of xTicks(x0,x1))s+=`<text x="${X(xl.x)}" y="${h-6}" text-anchor="middle">${xl.t}</text>`;
+  for(const m of marks)s+=`<rect x="${X(m.x)-Math.min(bw*.35,4)}" y="${T+H-7}" width="${Math.min(bw*.7,8)}" height="7" rx="2" fill="var(--sleep)" fill-opacity=".85"/>`;
+  for(const se of series){const p=se.pts;if(!p.length)continue;
+    const d=p.map((q,i)=>`${i?'L':'M'}${X(q.x).toFixed(1)},${Y(q.y).toFixed(1)}`).join('');
+    if(se.area&&p.length>1)s+=`<path d="${d}L${X(p.at(-1).x)},${T+H}L${X(p[0].x)},${T+H}Z" fill="${se.color}" fill-opacity=".14"/>`;
+    if(p.length>1)s+=`<path d="${d}" fill="none" stroke="${se.color}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" ${se.dash?`stroke-dasharray="${se.dash}"`:''}/>`;
+    if(se.dots||p.length<3)for(const q of p)s+=`<circle cx="${X(q.x)}" cy="${Y(q.y)}" r="2.3" fill="${se.color}"/>`;
+    const e=p.at(-1);s+=`<circle cx="${X(e.x)}" cy="${Y(e.y)}" r="4.5" fill="${se.color}" stroke="var(--card)" stroke-width="2"/>`}
+  return s+'</svg>';
+}
+function periodEntries(){
+  const end=todayISO();const all=[...E.values()].filter(hasContent).sort((a,b)=>a.date.localeCompare(b.date));
+  if(ui.period==='all'||!all.length)return{list:all,from:all[0]?.date||end,end};
+  const from=addDays(end,-(PDAYS[ui.period]-1));return{list:all.filter(e=>e.date>=from),from,end};
+}
+function dayView(){
+  const d=ui.date,e=norm(entry(d)),h=e.health,from=addDays(d,-30);
+  const mon=[...E.values()].filter(x=>x.date>=from&&x.date<d);
+  const mean=f=>avg(mon.map(f).filter(v=>v!=null));
+  const rows=[['Сон',h.sl,mean(x=>x.health?.sl),v=>fmtHM(v),'up'],['Шаги',h.steps,mean(x=>x.health?.steps),nf,'up'],['Вес',h.w,mean(x=>x.health?.w),v=>dec(v.toFixed(1))+' кг','down'],['Пульс покоя',h.rhr,mean(x=>x.health?.rhr),v=>Math.round(v),'down'],['Слабость рук',e.arms,mean(x=>x.arms),v=>dec(+v.toFixed(1)),'down'],['Слабость ног',e.legs,mean(x=>x.legs),v=>dec(+v.toFixed(1)),'down']].filter(r=>r[1]!=null||r[2]!=null);
+  const dt=pd(d);
+  return `<section class="card"><div class="ch">${h2('День против месяца')}<span class="aside">${dt.getDate()} ${MON[dt.getMonth()]}</span></div>
+   ${rows.length?rows.map(([t,v,m,f,better])=>{const diff=v!=null&&m!=null?v-m:null;const good=diff==null?null:(better==='up'?diff>0:diff<0);
+   return `<div class="row"><div><div class="t">${t}</div><div class="s num">среднее за 30 дней ${m!=null?f(m):'—'}</div></div><div style="text-align:right"><div class="num" style="font-weight:700;font-size:17px">${v!=null?f(v):'—'}</div>${diff!=null&&Math.abs(diff)>1e-6?`<div class="s num" style="color:${good?'var(--a1)':'var(--bad)'}">${diff>0?'▲':'▼'} ${f(Math.abs(diff))}</div>`:''}</div></div>`}).join(''):'<div class="sub">За этот день пока нет данных.</div>'}
+   <div class="sub" style="margin-top:8px">День выбирается на вкладке «Сегодня» стрелками.</div></section>`;
+}
+function charts(){
+  const head=`<div class="h1">Графики</div><div class="seg" style="margin:-4px 0 4px">${PERIODS.map(([k,l])=>`<button data-period="${k}" aria-pressed="${ui.period===k}">${l}</button>`).join('')}</div>`;
+  if(ui.period==='day')return head+dayView();
+  const {list,from,end}=periodEntries();
+  if(!list.length)return head+`<div class="card empty">За этот период записей нет. ${E.size?'Выбери период побольше.':'Загрузи старые записи в разделе «Ещё».'}</div>`;
+  const x0=pd(ui.period==='all'?list[0].date:from).getTime(),x1=pd(end).getTime();
+  const P=(f)=>list.map(e=>({x:pd(e.date).getTime(),y:f(e)})).filter(p=>p.y!=null&&!isNaN(p.y));
+  const long=ui.period==='q'||ui.period==='all';
+  const smooth=p=>long?p.map((q,i)=>{const a=p.filter(r=>r.x<=q.x&&r.x>q.x-7*DAY);return{x:q.x,y:avg(a.map(r=>r.y))}}):p;
+  const out=[];
+  const arms=P(e=>e.arms),legs=P(e=>e.legs);
+  const bands=list.filter(e=>e.sick).map(e=>({x:pd(e.date).getTime()})),marks=list.filter(e=>(e.causes||[]).some(c=>ARM_CAUSES.includes(c))).map(e=>({x:pd(e.date).getTime()}));
+  out.push(`<section class="card"><div class="ch">${h2('Слабость')}<span class="aside num">${arms.length?`руки в среднем ${dec(avg(arms.map(p=>p.y)).toFixed(1))}`:''}</span></div>
+   ${arms.length||legs.length?chart({series:[{pts:smooth(legs),color:'var(--rec)',dash:'4 3',dots:!long},{pts:smooth(arms),color:'var(--weak)',dots:!long}],x0,x1,yMin:0,yMax:10,ticks:[0,5,10],fmt:t=>t,bands,marks}):'<div class="sub">Оценок слабости пока нет. Они появятся после первых записей в приложении.</div>'}
+   <div class="legend"><span><i style="background:var(--weak)"></i>руки</span><span><i style="background:var(--rec)"></i>ноги</span><span><i style="background:var(--sleep)"></i>нагрузка на руки</span><span><i style="background:var(--bad);opacity:.35"></i>болел</span></div></section>`);
+  const sl=P(e=>e.health?.sl);
+  if(sl.length)out.push(`<section class="card"><div class="ch">${h2('Сон')}<span class="aside num">в среднем ${fmtSleep(avg(sl.map(p=>p.y)))}</span></div>
+   ${chart({series:[{pts:smooth(sl),color:'var(--sleep)',area:true,dots:!long}],x0,x1,...niceRange(sl.map(p=>p.y),2,.2),fmt:t=>t+' ч'})}
+   <div class="legend"><span>${long?'Среднее за 7 дней · ':''}ночей короче 6 ч: <b class="num" style="color:var(--ink)">${sl.filter(p=>p.y<6).length}</b> из ${sl.length} · цель ${fmtHM(S.goals.sleep)}</span></div></section>`);
+  const st=P(e=>e.health?.steps);
+  if(st.length)out.push(`<section class="card"><div class="ch">${h2('Шаги')}<span class="aside num">в среднем ${nf(avg(st.map(p=>p.y)))}</span></div>
+   ${chart({series:[{pts:smooth(st.map(p=>({x:p.x,y:p.y/1000}))),color:'var(--move)',area:true,dots:!long}],x0,x1,...niceRange(st.map(p=>p.y/1000).concat([0]),10),fmt:t=>t?t+' т':'0'})}</section>`);
+  const w=P(e=>e.health?.w);
+  if(w.length)out.push(`<section class="card"><div class="ch">${h2('Вес')}<span class="aside num">${dec(w[0].y)} → ${dec(w.at(-1).y)} кг</span></div>
+   ${chart({series:[{pts:w,color:'var(--ink)',dots:!long}],x0,x1,...niceRange(w.map(p=>p.y),long?2:1,.2),fmt:t=>dec(t)})}</section>`);
+  const used=S.exercises.filter(x=>list.some(e=>e.ex?.[x.id]?.v));
+  if(used.length){if(!used.find(x=>x.id===ui.chartEx))ui.chartEx=used[0].id;const X=exById(ui.chartEx),ex=P(e=>e.ex?.[X.id]?.v||null);
+    out.push(`<section class="card"><div class="ch">${h2('Упражнения')}<span class="aside num">лучшее ${ex.length?fmtEx(X,Math.max(...ex.map(p=>p.y))):'—'}</span></div>
+     <div class="chips" style="margin-bottom:10px">${used.map(x=>`<button class="chip sm" data-chartex="${x.id}" aria-pressed="${x.id===ui.chartEx}">${esc(x.n)}</button>`).join('')}</div>
+     ${ex.length?chart({series:[{pts:ex,color:'var(--ex)',area:true,dots:true}],x0,x1,...niceRange(ex.map(p=>p.y).concat([0]),X.u==='s'?30:10),fmt:t=>X.u==='s'?(t?fmtSec(t):'0'):t}):''}</section>`)}
+  if(long){const M={};for(const e of list){const k=e.date.slice(0,7);const o=(M[k]??={n:0,sl:[],st:[],w:[],a:[]});o.n++;e.health?.sl&&o.sl.push(e.health.sl);e.health?.steps&&o.st.push(e.health.steps);e.health?.w&&o.w.push(e.health.w);e.arms!=null&&o.a.push(e.arms)}
+    out.push(`<section class="card"><div class="ch">${h2('По месяцам')}</div><div class="scroll"><table class="tbl num"><thead><tr><th>Месяц</th><th>Дней</th><th>Сон</th><th>Шаги</th><th>Вес</th><th>Руки</th></tr></thead><tbody>
+     ${Object.entries(M).map(([k,o])=>`<tr><td>${MONN[+k.slice(5)-1]}</td><td>${o.n}</td><td>${o.sl.length?fmtHM(avg(o.sl)):'—'}</td><td>${o.st.length?nf(avg(o.st)):'—'}</td><td>${o.w.length?dec(o.w.at(-1)):'—'}</td><td>${o.a.length?dec(avg(o.a).toFixed(1)):'—'}</td></tr>`).join('')}</tbody></table></div></section>`)}
+  return head+out.join('');
+}
+
+/* ---------- links (correlations) ---------- */
+function links(){
+  const scored=[...E.values()].filter(e=>e.arms!=null||e.legs!=null).sort((a,b)=>a.date.localeCompare(b.date));
+  const head=`<div class="h1">Связи</div>`;
+  const NEED=10;
+  if(scored.length<NEED)return head+`<div class="card empty"><div class="big" style="margin-bottom:8px">Нужно ещё ${NEED-scored.length} ${plural(NEED-scored.length,'день','дня','дней')} с оценкой слабости</div>
+    <div class="bars"><div class="bar"><span>собрано</span><div class="track"><div class="fill" style="width:${scored.length/NEED*100}%"></div></div><b class="num">${scored.length}</b></div></div>
+    <p class="sub" style="margin-top:10px">Когда дней хватит, приложение покажет, после чего слабость в руках и ногах бывает сильнее: руль, гиря, недосып, простуда, стресс и твои причины.</p></div>`;
+  const at=d=>E.get(d);
+  const val=(e,k)=>e?.[k];
+  const cards=[];
+  const bar=(l,v,c)=>`<div class="bar"><span>${l}</span><div class="track"><div class="fill ${c?'c':''}" style="width:${Math.min(v,10)*10}%"></div></div><b class="num">${dec(v.toFixed(1))}</b></div>`;
+  function lagStats(test,k){const r=[];for(const lag of[0,1,2]){const yes=[],no=[];for(const e of E.values()){const t=at(addDays(e.date,lag));const v=val(t,k);if(v==null)continue;(test(e)?yes:no).push(v)}r.push({lag,yes:avg(yes),ny:yes.length,no:avg(no),nn:no.length})}return r}
+  const causes=[...new Set([...E.values()].flatMap(e=>e.causes||[]))].filter(c=>c!=='Не знаю');
+  for(const c of causes){for(const[k,limb]of[['arms','рук'],['legs','ног']]){
+    const st=lagStats(e=>(e.causes||[]).includes(c),k);const best=st.filter(s=>s.ny>=3&&s.nn>=3).sort((a,b)=>(b.yes-b.no)-(a.yes-a.no))[0];
+    if(!best||best.yes-best.no<0.7)continue;
+    const when=['в тот же день','на следующий день','через 2 дня'][best.lag];
+    cards.push({score:best.yes-best.no,html:`<section class="card ins"><div class="lbl" style="margin-bottom:6px">${esc(c)}</div><div class="big">После «${esc(c.toLowerCase())}» слабость ${limb} ${when} выше</div>
+     <div class="bars">${st.map(s=>s.yes!=null?bar(['в тот же день','через 1 день','через 2 дня'][s.lag],s.yes):'').join('')}${bar('в остальные дни',best.no,1)}</div><div class="sub" style="margin-top:8px">Дней с этой причиной: ${best.ny}</div></section>`})}}
+  {const yes=[],no=[];for(const e of E.values()){if(e.arms==null||e.health?.sl==null)continue;(e.health.sl<6?yes:e.health.sl>=7?no:[]).push(e.arms)}
+   if(yes.length>=3&&no.length>=3&&avg(yes)-avg(no)>=0.5)cards.push({score:avg(yes)-avg(no),html:`<section class="card ins"><div class="lbl" style="margin-bottom:6px">Сон</div><div class="big">После ночи короче 6 часов слабость рук выше</div><div class="bars">${bar('сон < 6 ч',avg(yes))}${bar('сон 7+ ч',avg(no),1)}</div></section>`})}
+  {const yes=[],no=[];for(const e of E.values()){if(e.arms==null)continue;(e.sick?yes:no).push(e.arms)}
+   if(yes.length>=2&&no.length>=3&&avg(yes)-avg(no)>=0.5)cards.push({score:avg(yes)-avg(no),html:`<section class="card ins"><div class="lbl" style="margin-bottom:6px">Болезнь</div><div class="big">Во время болезни слабость рук выше</div><div class="bars">${bar('болел',avg(yes))}${bar('здоров',avg(no),1)}</div></section>`})}
+  cards.sort((a,b)=>b.score-a.score);
+  return head+`<p class="sub" style="margin:-6px 0 12px">Посчитано по ${scored.length} ${plural(scored.length,'дню','дням','дням')} с оценкой. Совпадение не всегда значит причину: это повод присмотреться и обсудить с врачом.</p><div class="stack">${cards.length?cards.map(c=>c.html).join(''):'<div class="card empty">Явных связей пока не видно. Чем больше дней с оценками и отмеченными причинами, тем точнее.</div>'}</div>`;
+}
+
+/* ---------- more ---------- */
+function more(){
+  const it=(t,s,attr='',b='<span class="sub" aria-hidden="true">›</span>')=>`<button class="row rowbtn" ${attr}><div><div class="t">${t}</div><div class="s">${s}</div></div>${b}</button>`;
+  const m=ui.manage;
+  if(m)return manage(m);
+  const cnt=[...E.values()].filter(hasContent).length;
+  return `<div class="h1">Ещё</div><div class="stack">
+  <section class="card"><div class="ch">${h2('Выгрузка')}<span class="aside">${S.lastExport?'последняя: '+new Date(S.lastExport).toLocaleDateString('ru-RU'):'ещё не было'}</span></div>
+    <div class="seg" style="margin-bottom:6px">${[['all','Всё'],['month','Месяц'],['week','Неделя']].map(([k,l])=>`<button data-exportp="${k}" aria-pressed="${ui.exportP===k}">${l}</button>`).join('')}</div>
+    ${it('Текст дневника (.md)','По дням, как оформленный дневник. Для папки «Здоровье» и Claude','data-export="md"')}
+    ${it('Таблица (.csv)','Все цифры по столбцам, открывается в Excel','data-export="csv"')}
+    ${it('Полная копия (.json)','Резервная копия всех записей и настроек','data-export="json"')}
+    <div class="sub" style="padding-top:8px">Откроется меню «Поделиться»: «Сохранить в Файлы», Telegram, почта.</div></section>
+  <section class="card"><div class="ch">${h2('Загрузка')}<span class="aside num">${cnt} ${plural(cnt,'запись','записи','записей')}</span></div>
+    <label class="row rowbtn" for="importFile"><div><div class="t">Загрузить записи из файла</div><div class="s">Старые записи или полная копия (.json). Существующие дни не перезапишутся</div></div><span class="sub">›</span></label>
+    <input type="file" id="importFile" accept=".json,application/json" hidden></section>
+  <section class="card"><div class="ch">${h2('Google Диск')}<span class="aside">следующий шаг</span></div><div class="sub">Автоматическая копия на твой Диск. Подключим, когда приложение будет на GitHub.</div></section>
+  <section class="card"><div class="ch">${h2('Оформление')}<span class="aside">тема — как на iPhone</span></div>${swatches()}</section>
+  <section class="card"><div class="ch">${h2('Настройки дневника')}</div>
+    ${it('Препараты',S.meds.filter(x=>x.active).map(x=>x.n.split(' (')[0]).join(', ')||'список пуст','data-manage="meds"')}
+    ${it('Упражнения',S.exercises.filter(x=>x.active).map(x=>x.n).join(', '),'data-manage="ex"')}
+    ${it('Причины слабости',S.causes.length+' вариантов','data-manage="causes"')}
+    ${it('Даты и цели',`начало ${pd(S.start).toLocaleDateString('ru-RU')} · сон ${fmtHM(S.goals.sleep)} · ${nf(S.goals.steps)} шагов`,'data-manage="dates"')}
+    ${it('Команда «Записать день»','Как подтянуть данные из «Здоровья»','data-manage="shortcut"')}</section>
+  <section class="card"><div class="ch">${h2('Защита')}</div>
+    ${it('Вход по PIN-коду',S.pin?'Включён':'Выключен','data-manage="pin"')}
+    <div class="row"><div><div class="t">Где хранятся записи</div><div class="s">Только в этом приложении на этом iPhone. Если открыть сайт в Safari, там будет пустой дневник. Делай копию раз в неделю.</div></div></div></section>
+  <section class="card">${ui.confirmWipe?`<div class="t" style="margin-bottom:10px">Удалить все записи и настройки с этого телефона? Это нельзя отменить.</div><div class="form"><button class="btn sm ghost" data-wipe="no">Отмена</button><button class="btn sm danger" data-wipe="yes">Удалить</button></div>`:`<button class="add" style="margin:0;color:var(--bad)" data-wipe="ask">Удалить все данные</button>`}</section>
+  <div class="sub" style="text-align:center">Дневник восстановления · версия ${APP_VERSION}</div></div>`;
+}
+function manage(m){
+  const back=`<button class="backbtn" data-manage="">‹ Ещё</button>`;
+  if(m==='meds')return back+`<div class="h1">Препараты</div><section class="card">${S.meds.map(x=>`<div class="row"><div><div class="t">${esc(x.n)}</div><div class="s">${esc(x.d)}${x.active?'':' · в архиве'}</div></div><button class="tog" data-medact="${x.id}" aria-pressed="${x.active}" aria-label="Принимаю сейчас"></button></div>`).join('')}
+    <div class="form"><input type="text" class="full" id="medName" placeholder="Название"><input type="text" id="medDose" placeholder="Доза"><input type="text" id="medTime" placeholder="Когда"><button class="btn sm full" data-medsave>Добавить</button></div>
+    <div class="sub" style="margin-top:8px">Выключенный препарат уходит в архив: из дня он пропадает, а история сохраняется.</div></section>`;
+  if(m==='ex')return back+`<div class="h1">Упражнения</div><section class="card">${S.exercises.map(x=>`<div class="row"><div><div class="t">${esc(x.n)}</div><div class="s">${x.u==='s'?'секунды':'раз'}${x.kg!=null?' · '+dec(x.kg)+' кг':''}${x.active?'':' · скрыто'}</div></div><button class="tog" data-exact="${x.id}" aria-pressed="${x.active}" aria-label="Показывать"></button></div>`).join('')}
+    <div class="form"><input type="text" class="full" id="exName" placeholder="Новое упражнение"><div class="seg full">${['раз','секунды'].map(u=>`<button data-exu="${u}" aria-pressed="${ui.exU===u}">${u}</button>`).join('')}</div><input type="text" class="full" inputmode="decimal" id="exKg" placeholder="Вес, кг (если есть)"><button class="btn sm full" data-exsave>Добавить</button></div></section>`;
+  if(m==='causes')return back+`<div class="h1">Причины слабости</div><section class="card">${S.causes.map((c,i)=>`<div class="row"><div class="t">${esc(c)}</div><button class="del" data-delcause="${i}" aria-label="Убрать">×</button></div>`).join('')}
+    <div class="inline"><input type="text" id="causeIn" placeholder="Своя причина"><button class="btn sm" data-causesave style="width:auto">Добавить</button></div><div class="sub" style="margin-top:8px">Удаление убирает вариант из списка, старые записи не меняются.</div></section>`;
+  if(m==='dates'){const f=(id,l,v,mode='text')=>`<label class="row"><div class="t">${l}</div><input type="${mode}" id="${id}" value="${esc(v)}" style="width:160px;text-align:right"></label>`;
+    return back+`<div class="h1">Даты и цели</div><section class="card">${f('setStart','День 1',S.start,'date')}${f('setAlc','Без алкоголя с',S.sober.alc,'date')}${f('setSmoke','Без сигарет с',S.sober.smoke,'date')}</section>
+    <section class="card">${f('setSleep','Цель сна, ч:мин',fmtHM(S.goals.sleep))}${f('setSteps','Цель шагов',S.goals.steps)}${f('setExmin','Упражнения, мин',S.goals.exmin)}</section><button class="btn" data-savedates>Сохранить</button>`}
+  if(m==='pin')return back+`<div class="h1">PIN-код</div><section class="card"><div class="sub" style="margin-bottom:10px">PIN спрашивается при каждом открытии приложения. Если забудешь его, данные не пропадут, но войти можно будет только после сброса приложения, поэтому держи свежую копию.</div>
+    ${S.pin?`<button class="btn sm ghost" data-pinoff>Выключить PIN</button>`:`<div class="inline"><input type="password" inputmode="numeric" id="pinIn" placeholder="4 цифры" maxlength="4"><button class="btn sm" data-pinset style="width:auto">Включить</button></div>`}</section>`;
+  if(m==='shortcut')return back+`<div class="h1">Команда «Записать день»</div><section class="card"><p class="sub" style="margin-top:0">Команда для приложения «Команды» на iPhone берёт данные из «Здоровья» и открывает дневник с уже заполненными полями. Её мы соберём следующим шагом.</p>
+    <div class="lbl" style="margin:12px 0 6px">Что она передаёт</div><div class="sub">Сон и стадии, шаги и километры, вес, пульс покоя, вариабельность, дыхание, температуру запястья, активные калории, минуты упражнений, тренировки.</div>
+    <div class="lbl" style="margin:12px 0 6px">Адрес для Команды</div><code class="code">${esc(location.origin+location.pathname)}?sl=6:49&amp;sq=92&amp;steps=11976&amp;km=10.4&amp;w=75.6&amp;rhr=56&amp;hrv=48</code></section>`;
+  return '';
+}
+
+/* ---------- export / import ---------- */
+function exportList(){let l=[...E.values()].filter(hasContent).sort((a,b)=>a.date.localeCompare(b.date));if(ui.exportP!=='all'){const from=addDays(todayISO(),-(ui.exportP==='month'?29:6));l=l.filter(e=>e.date>=from)}return l}
+function entryMD(e){const d=pd(e.date),h=e.health||{},L=[];
+  L.push(`### День ${dayN(e.date)} · ${d.getDate()} ${MON[d.getMonth()]}, ${WDS[d.getDay()]}`);
+  if(e.note)L.push(e.note);
+  const w=[];if(e.arms!=null)w.push(`руки ${e.arms}/10`);if(e.legs!=null)w.push(`ноги ${e.legs}/10`);
+  if(w.length||e.causes?.length)L.push(`Слабость: ${w.join(', ')||'—'}${e.causes?.length?` · Повлияло: ${e.causes.map(c=>c==='Руль'&&e.drive?`руль ${e.drive} ч`:c.toLowerCase()).join(', ')}`:''}`);
+  if(e.mood)L.push(`Самочувствие: ${MOODS[e.mood-1][0]}`);
+  const m=[];if(h.sl)m.push(`Сон ${fmtSleep(h.sl)}${h.sq!=null?' · '+h.sq+'%':''}${h.slNote?' ('+h.slNote+')':''}`);if(h.w)m.push(`Вес ${dec(h.w)} кг`);if(h.steps)m.push(`Шаги ${nf(h.steps)}${h.km?' · '+dec(h.km)+' км':''}`);
+  if(h.rhr)m.push(`Пульс покоя ${h.rhr}`);if(h.hrv)m.push(`ВСР ${h.hrv} мс`);if(h.wtemp!=null)m.push(`t° запястья ${h.wtemp>0?'+':''}${dec(h.wtemp)}`);if(h.resp)m.push(`Дыхание ${dec(h.resp)}`);if(h.exmin)m.push(`Упражнения ${h.exmin} мин`);
+  if(m.length)L.push(m.join('  ·  '));
+  const ex=Object.entries(e.ex||{}).filter(([,x])=>x.v).map(([id,x])=>{const d=exById(id);return `${d.n} ${fmtEx(d,x.v)}${x.kg?` (${dec(x.kg)} кг)`:''}`});
+  if(e.charge||ex.length)L.push(`Зарядка${e.charge?' '+e.charge:''}${ex.length?': '+ex.join(' · '):''}`);
+  if(e.workouts?.length)L.push('Тренировки: '+e.workouts.map(w=>[w.t,w.dist,w.time,w.type==='walk'&&w.run?`бег ${w.runM||0} м`:''].filter(Boolean).join(' ')).join('; '));
+  const md=S.meds.filter(x=>e.meds?.[x.id]!=null).map(x=>`${x.n.split(' (')[0]} ${e.meds[x.id]?'✓':'—'}`);
+  if(md.length||e.medsNote)L.push(`Препараты: ${md.join(', ')||e.medsNote}`);
+  const o=[];if(e.stool)o.push(`Стул ${e.stool}${e.stoolNote&&e.stoolNote!==e.stool?' ('+e.stoolNote+')':''}`);if(e.dayType?.length)o.push(`День: ${e.dayType.join(', ').toLowerCase()}`);if(e.waist)o.push(`Живот ${dec(e.waist)} см`);
+  if(o.length)L.push(o.join('  ·  '));
+  if(e.sick)L.push(`Болезнь: ${[...(e.sym||[])].join(', ').toLowerCase()||'да'}${e.temp?', t '+e.temp:''}`);
+  return L.join('\n');
+}
+function buildMD(l){let out=`# Дневник восстановления\n\nВыгрузка ${new Date().toLocaleDateString('ru-RU')} · записей: ${l.length}\n`;let cm='';for(const e of l){const k=e.date.slice(0,7);if(k!==cm){cm=k;out+=`\n## ${MONN[+k.slice(5)-1]} ${k.slice(0,4)}\n`}out+='\n'+entryMD(e)+'\n'}return out}
+function buildCSV(l){const exIds=S.exercises.map(x=>x.id);const cols=['date','day','arms','legs','causes','drive_h','mood','sleep_h','sleep_score','steps','km','weight','rhr','hrv','wrist_temp','resp','kcal','ex_min','charge',...exIds.map(i=>'ex_'+i),...exIds.filter(i=>exById(i).kg!=null).map(i=>'kg_'+i),'workouts','meds','sick','symptoms','temp','stool','day_type','waist','note'];
+  const q=v=>{if(v==null)return '';const s=String(v);return /[;"\n]/.test(s)?`"${s.replace(/"/g,'""')}"`:s};
+  const rows=l.map(e=>{const h=e.health||{};return[e.date,dayN(e.date),e.arms,e.legs,(e.causes||[]).join(', '),e.drive,e.mood,h.sl!=null?+h.sl.toFixed(2):'',h.sq,h.steps,h.km,h.w,h.rhr,h.hrv,h.wtemp,h.resp,h.kcal,h.exmin,e.charge,...exIds.map(i=>e.ex?.[i]?.v),...exIds.filter(i=>exById(i).kg!=null).map(i=>e.ex?.[i]?.kg),(e.workouts||[]).map(w=>[w.t,w.dist,w.time].filter(Boolean).join(' ')).join('; '),S.meds.filter(x=>e.meds?.[x.id]).map(x=>x.n).join(', ')||e.medsNote,e.sick?1:'',(e.sym||[]).join(', '),e.temp,e.stool,(e.dayType||[]).join(', '),e.waist,e.note].map(v=>q(typeof v==='number'?dec(v):v)).join(';')});
+  return '﻿'+cols.join(';')+'\n'+rows.join('\n')}
+async function shareFile(name,text,type){
+  const file=new File([text],name,{type});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:name});return true}catch(err){if(err.name==='AbortError')return false}}
+  const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000);return true;
+}
+async function doExport(kind){
+  const l=exportList(),stamp=todayISO();
+  if(!l.length)return toast('За этот период записей нет');
+  let ok;
+  if(kind==='md')ok=await shareFile(`Дневник восстановления ${stamp}.md`,buildMD(l),'text/markdown');
+  else if(kind==='csv')ok=await shareFile(`Дневник ${stamp}.csv`,buildCSV(l),'text/csv');
+  else ok=await shareFile(`Дневник копия ${stamp}.json`,JSON.stringify({app:'dnevnik',version:1,kind:'backup',exported:new Date().toISOString(),settings:S,entries:l},null,1),'application/json');
+  if(ok){S.lastExport=Date.now();await saveSettings();render()}
+}
+async function doImport(file){
+  try{const data=JSON.parse(await file.text());if(data.app!=='dnevnik'||!Array.isArray(data.entries))throw new Error('Это не файл дневника');
+    const wasEmpty=![...E.values()].some(hasContent);
+    let add=0,skip=0;for(const e of data.entries){if(!e.date||!/^\d{4}-\d\d-\d\d$/.test(e.date))continue;if(hasContent(E.get(e.date))){skip++;continue}const n=norm(e);E.set(n.date,n);await DB.put(n);add++}
+    if(data.kind==='backup'&&wasEmpty&&data.settings&&Array.isArray(data.settings.exercises)){S={...structuredClone(DEFAULTS),...data.settings};await saveSettings();applyAccent()}
+    toast(`Загружено ${add} ${plural(add,'запись','записи','записей')}${skip?`, пропущено ${skip}: эти дни уже есть`:''}`);render();
+  }catch(err){toast('Не получилось загрузить: '+err.message)}
+}
+
+/* ---------- Shortcut / URL import ---------- */
+function urlImport(){
+  const p=new URLSearchParams(location.search);if(![...p.keys()].length)return;
+  applyParams(p,true);history.replaceState(null,'',location.pathname);
+}
+async function pasteHealth(){
+  let txt='';try{txt=await navigator.clipboard.readText()}catch(_){}
+  if(!/(sl|steps|rhr|w)=/.test(txt)){ui.pasteBox=true;rr();return}
+  if(applyParams(new URLSearchParams(txt.slice(txt.indexOf('?')+1).trim()),false))rr();else toast('В буфере нет данных из «Здоровья»');
+}
+function applyParams(p,fromUrl){
+  const date=p.get('d')||(fromUrl?todayISO():ui.date);const e=norm(entry(date));const h=e.health;let n=0;
+  const man=h.manual||{};const set=(k,v)=>{if(v!=null&&!isNaN(v)&&!man[k]){h[k]=v;n++}};
+  {let v=parseSleep(p.get('sl'));if(v!=null){if(v>1440)v=v/3600;else if(v>24)v=v/60;set('sl',Math.round(v*1000)/1000)}}for(const k of['sq','deep','rem','core','awake','rhr','hrv','kcal','exmin','stand','steps'])set(k,p.has(k)?Math.round(parseNum(p.get(k))):null);
+  for(const k of['km','w','resp','wtemp'])set(k,p.has(k)?Math.round(parseNum(p.get(k))*100)/100:null);
+  if(p.get('bed'))h.bed=p.get('bed');if(p.get('wake'))h.wake=p.get('wake');
+  if(p.get('wk')){e.workouts=e.workouts.filter(w=>w.src!=='Здоровье');for(const s of p.get('wk').split(';')){const[type,dist,time]=s.split('|');if(!type)continue;const k=WK[type]?type:'other';e.workouts.push({type:k,t:WK[k][0],dist:dist||'',time:time||'',src:'Здоровье'})}n++}
+  if(n){h.src='Команда · '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});saveEntry(e);ui.date=date;setTimeout(()=>toast('Данные из «Здоровья» добавлены'),300)}
+  return n;
+}
+
+/* ---------- PIN ---------- */
+async function hash(s){if(crypto.subtle){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('dnevnik:'+s));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}let h=0;for(const c of 'dnevnik:'+s)h=(h*31+c.charCodeAt(0))|0;return String(h)}
+function lockScreen(){return new Promise(res=>{const el=$('lock');el.hidden=false;let v='';
+  const draw=()=>{el.innerHTML=`<div class="lock-in"><div class="h1" style="text-align:center">Дневник</div><div class="dots">${[0,1,2,3].map(i=>`<i class="${i<v.length?'on':''}"></i>`).join('')}</div><div class="pad">${[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(k=>k===''?'<span></span>':`<button data-k="${k}">${k}</button>`).join('')}</div></div>`};
+  draw();el.onclick=async ev=>{const b=ev.target.closest('button');if(!b)return;const k=b.dataset.k;if(k==='⌫')v=v.slice(0,-1);else if(v.length<4)v+=k;draw();
+    if(v.length===4){if(await hash(v)===S.pin){el.hidden=true;el.onclick=null;res()}else{v='';el.querySelector('.dots').classList.add('shake');setTimeout(draw,400)}}}})}
+
+/* ---------- render & events ---------- */
+const ICONS={today:'<circle cx="12" cy="12" r="8"/><path d="M12 8v4l2.5 2"/>',diary:'<path d="M6 4h11a1 1 0 0 1 1 1v15H7a2 2 0 0 1-2-2V5a1 1 0 0 1 1-1z"/><path d="M9 8h6M9 12h6"/>',charts:'<path d="M4 19h16"/><path d="M6 15l4-5 3 3 5-7"/>',links:'<circle cx="7" cy="12" r="3"/><circle cx="17" cy="7" r="3"/><circle cx="17" cy="17" r="3"/><path d="M9.6 10.6l4.8-2.3M9.6 13.4l4.8 2.3"/>',more:'<circle cx="6" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18" cy="12" r="1.3"/>'};
+const TABS=[['today','Сегодня'],['diary','Дневник'],['charts','Графики'],['links','Связи'],['more','Ещё']];
+const SCREENS={today,diary,charts,links,more};
+function render(keepScroll){
+  const y=window.scrollY;
+  $('screen').innerHTML=`<div class="screen stack">${SCREENS[ui.tab]()}</div>`;
+  for(const b of $('tabs').children)b.setAttribute('aria-selected',b.dataset.tab===ui.tab);
+  if(keepScroll)window.scrollTo(0,y);
+}
+const rr=()=>render(true);
+function cur(){return norm(entry(ui.date))}
+function onInput(ev){
+  const t=ev.target,id=t.id,e=cur();
+  if(id==='note'){e.note=t.value;saveEntry(e)}
+  else if(id==='waist'){e.waist=parseNum(t.value);saveEntry(e)}
+  else if(id==='temp'){e.temp=t.value;saveEntry(e)}
+  else if(id==='search'){ui.q=t.value;clearTimeout(onInput.t);onInput.t=setTimeout(()=>{render(true);const s=$('search');s.focus();s.setSelectionRange(s.value.length,s.value.length)},250)}
+  else if(t.dataset.h){const k=t.dataset.h;const v=k==='sl'?parseSleep(t.value):parseNum(t.value);e.health.manual??={};if(v==null){delete e.health[k];delete e.health.manual[k]}else{e.health[k]=v;e.health.manual[k]=true}if(!e.health.src)e.health.src='вручную';saveEntry(e)}
+  else if(t.dataset.runm!=null){e.workouts[+t.dataset.runm].runM=parseNum(t.value);saveEntry(e)}
+}
+async function onClick(ev){
+  const t=ev.target.closest('button');if(!t)return;const ds=t.dataset;
+  if(ds.tab){ui.tab=ds.tab;ui.manage=null;render();window.scrollTo(0,0);return}
+  const e=cur();
+  if(ds.nav){const nd=addDays(ui.date,+ds.nav);if(nd<=todayISO()){ui.date=nd;render()}return}
+  if('badge' in ds){ui.badge++;return rr()}
+  if(ds.accent){S.accent=ds.accent;applyAccent();await saveSettings();return rr()}
+  if('watch' in ds){ui.watchOpen=!ui.watchOpen;if(!ui.watchOpen)ui.editHealth=false;return rr()}
+  if('pastehealth' in ds){return pasteHealth()}
+  if('pasteok' in ds){const v=$('pasteIn').value;ui.pasteBox=false;if(!applyParams(new URLSearchParams(v.slice(v.indexOf('?')+1).trim()),false))toast('Не нашёл данных в тексте');return rr()}
+  if('edithealth' in ds){ui.editHealth=!ui.editHealth;return rr()}
+  if(ds.scale){const v=+ds.v;e[ds.scale]=e[ds.scale]===v?null:v;saveEntry(e);return rr()}
+  if(ds.cause){const c=ds.cause;e.causes=e.causes.includes(c)?e.causes.filter(x=>x!==c):[...e.causes,c];if(c==='Руль'&&e.drive==null)e.drive=1;saveEntry(e);return rr()}
+  if('addcause' in ds){ui.addCause=true;rr();$('causeIn')?.focus();return}
+  if('causesave' in ds){const v=$('causeIn').value.trim();if(v){if(!S.causes.includes(v)){S.causes.push(v);await saveSettings()}if(ui.tab==='today'&&!e.causes.includes(v)){e.causes.push(v);saveEntry(e)}}ui.addCause=false;return rr()}
+  if(ds.delcause!=null){S.causes.splice(+ds.delcause,1);await saveSettings();return rr()}
+  if(ds.drive){e.drive=Math.max(0,Math.min(16,(e.drive||0)+ +ds.drive));saveEntry(e);return rr()}
+  if(ds.mood){const v=+ds.mood;e.mood=e.mood===v?null:v;saveEntry(e);return rr()}
+  if(ds.charge){e.charge=e.charge===ds.charge?null:ds.charge;saveEntry(e);return rr()}
+  if(ds.ex){const x=exById(ds.ex);const c=e.ex[x.id]||{};const kg=c.kg??x.kg;const {last}=exHistory(x.id,ui.date,kg);let v=c.v||0;
+    if(!v&&+ds.d>0)v=last?.v||x.step;else v=Math.max(0,v+ +ds.d*x.step);
+    if(v){e.ex[x.id]={v,...(kg!=null?{kg}:{})}}else delete e.ex[x.id];saveEntry(e);return rr()}
+  if(ds.kg){ui.kgOpen[ds.kg]=!ui.kgOpen[ds.kg];return rr()}
+  if(ds.kgd){const x=exById(ds.kgd);const c=e.ex[x.id];const kg=Math.max(1,(c?.kg??x.kg)+ +ds.d*2);x.kg=kg;await saveSettings();if(c){c.kg=kg;saveEntry(e)}return rr()}
+  if('addex' in ds){ui.addEx=true;return rr()}
+  if(ds.exu){ui.exU=ds.exu;return rr()}
+  if('exsave' in ds){const nm=$('exName').value.trim();const kg=parseNum($('exKg').value);if(nm){S.exercises.push({id:'x'+uid(),n:nm,u:ui.exU==='секунды'?'s':'n',step:ui.exU==='секунды'?5:1,...(kg!=null?{kg}:{}),active:true});await saveSettings()}ui.addEx=false;return rr()}
+  if(ds.exact){const x=exById(ds.exact);x.active=!x.active;await saveSettings();return rr()}
+  if(ds.run!=null){const w=e.workouts[+ds.run];w.run=!w.run;saveEntry(e);return rr()}
+  if(ds.delwk!=null){e.workouts.splice(+ds.delwk,1);saveEntry(e);return rr()}
+  if('addwk' in ds){ui.addWk=true;return rr()}
+  if(ds.wkt){ui.wkT=ds.wkt;return rr()}
+  if('wksave' in ds){const k=ui.wkT;e.workouts.push({type:k,t:WK[k][0],dist:$('wkDist').value.trim(),time:$('wkTime').value.trim(),src:'вручную'});ui.addWk=false;saveEntry(e);return rr()}
+  if(ds.med){e.meds[ds.med]=!e.meds[ds.med];saveEntry(e);return rr()}
+  if('addmed' in ds){ui.addMed=true;return rr()}
+  if('medsave' in ds){const n=$('medName').value.trim();if(n){S.meds.push({id:'m'+uid(),n,d:[$('medDose').value.trim(),$('medTime').value.trim()].filter(Boolean).join(' · '),active:true});await saveSettings()}ui.addMed=false;return rr()}
+  if(ds.medact){const m=S.meds.find(x=>x.id===ds.medact);m.active=!m.active;await saveSettings();return rr()}
+  if('sick' in ds){e.sick=!e.sick;saveEntry(e);return rr()}
+  if(ds.sym){const s=ds.sym;e.sym=e.sym.includes(s)?e.sym.filter(x=>x!==s):[...e.sym,s];saveEntry(e);return rr()}
+  if(ds.stool){e.stool=e.stool===ds.stool?null:ds.stool;saveEntry(e);return rr()}
+  if(ds.daytype){const s=ds.daytype;e.dayType=e.dayType.includes(s)?e.dayType.filter(x=>x!==s):[...e.dayType,s];saveEntry(e);return rr()}
+  if('save' in ds){saveEntry(e);await DB.put(e);toast(`День ${dayN(ui.date)} сохранён`);return}
+  if(ds.open){ui.date=ds.open;ui.tab='today';render();window.scrollTo(0,0);return}
+  if('more' in ds){ui.limit=(ui.limit||60)+60;return rr()}
+  if(ds.period){ui.period=ds.period;return rr()}
+  if(ds.chartex){ui.chartEx=ds.chartex;return rr()}
+  if(ds.exportp){ui.exportP=ds.exportp;return rr()}
+  if(ds.export){return doExport(ds.export)}
+  if(ds.manage!=null){ui.manage=ds.manage||null;render();window.scrollTo(0,0);return}
+  if('savedates' in ds){const v=id=>$(id).value;if(/^\d{4}-\d\d-\d\d$/.test(v('setStart')))S.start=v('setStart');if(v('setAlc'))S.sober.alc=v('setAlc');if(v('setSmoke'))S.sober.smoke=v('setSmoke');
+    S.goals.sleep=parseSleep(v('setSleep'))||S.goals.sleep;S.goals.steps=parseNum(v('setSteps'))||S.goals.steps;S.goals.exmin=parseNum(v('setExmin'))||S.goals.exmin;await saveSettings();toast('Сохранено');ui.manage=null;return render()}
+  if('pinset' in ds){const v=$('pinIn').value;if(!/^\d{4}$/.test(v))return toast('Нужно 4 цифры');S.pin=await hash(v);await saveSettings();toast('PIN включён');return rr()}
+  if('pinoff' in ds){S.pin=null;await saveSettings();toast('PIN выключен');return rr()}
+  if(ds.wipe){if(ds.wipe==='ask'){ui.confirmWipe=true;return rr()}if(ds.wipe==='no'){ui.confirmWipe=false;return rr()}
+    await DB.clear();E.clear();S=structuredClone(DEFAULTS);ui.confirmWipe=false;applyAccent();toast('Все данные удалены');return render()}
+}
+
+async function start(){
+  $('tabs').innerHTML=TABS.map(([k,l])=>`<button class="tab" role="tab" data-tab="${k}"><svg viewBox="0 0 24 24">${ICONS[k]}</svg>${l}</button>`).join('');
+  try{await DB.open();const s=await DB.get('settings');if(s)S={...structuredClone(DEFAULTS),...s,goals:{...DEFAULTS.goals,...(s.goals||{})},sober:{...DEFAULTS.sober,...(s.sober||{})}};for(const e of await DB.all())E.set(e.date,norm(e))}
+  catch(err){$('screen').innerHTML=`<div class="card empty">Хранилище недоступно: ${esc(err.message)}. Открой приложение с экрана «Домой», не в режиме частного доступа.</div>`;return}
+  applyAccent();
+  if(S.pin)await lockScreen();
+  urlImport();
+  document.addEventListener('click',onClick);
+  document.addEventListener('input',onInput);
+  document.addEventListener('change',ev=>{if(ev.target.id==='importFile'&&ev.target.files[0])doImport(ev.target.files[0])});
+  document.addEventListener('keydown',ev=>{if(ev.key==='Enter'&&ev.target.id==='causeIn'){ev.preventDefault();document.querySelector('[data-causesave]')?.click()}});
+  setInterval(()=>{if(ui.tab==='today'&&!document.activeElement?.matches('input,textarea')){ui.badge++;const b=document.querySelector('[data-badge]');if(b)b.textContent=BADGES()[ui.badge%3]}},5000);
+  matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',()=>{applyAccent();rr()});
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){const t=todayISO();if(ui.date>t)ui.date=t}});
+  navigator.storage?.persist?.();
+  render();
+  if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+start();
+
+</script>
+</body>
+</html>
