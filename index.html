@@ -241,7 +241,7 @@ label.m{display:block}
 <script>
 'use strict';
 /* ===== Дневник восстановления · данные хранятся только на этом устройстве (IndexedDB) ===== */
-const APP_VERSION = '1.0';
+const APP_VERSION = '1.1';
 const MON=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 const MONN=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 const WD=['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'], WDS=['вс','пн','вт','ср','чт','пт','сб'];
@@ -662,7 +662,7 @@ async function pasteHealth(){
 function applyParams(p,fromUrl){
   const date=p.get('d')||(fromUrl?todayISO():ui.date);const e=norm(entry(date));const h=e.health;let n=0;
   const set=(k,v)=>{if(v!=null&&!isNaN(v)){h[k]=v;n++}};
-  set('sl',parseSleep(p.get('sl')));for(const k of['sq','deep','rem','core','awake','rhr','hrv','kcal','exmin','stand','steps'])set(k,p.has(k)?Math.round(parseNum(p.get(k))):null);
+  {let v=parseSleep(p.get('sl'));if(v!=null){if(v>1440)v=v/3600;else if(v>24)v=v/60;set('sl',Math.round(v*1000)/1000)}}for(const k of['sq','deep','rem','core','awake','rhr','hrv','kcal','exmin','stand','steps'])set(k,p.has(k)?Math.round(parseNum(p.get(k))):null);
   for(const k of['km','w','resp','wtemp'])set(k,p.has(k)?Math.round(parseNum(p.get(k))*100)/100:null);
   if(p.get('bed'))h.bed=p.get('bed');if(p.get('wake'))h.wake=p.get('wake');
   if(p.get('wk')){e.workouts=e.workouts.filter(w=>w.src!=='Здоровье');for(const s of p.get('wk').split(';')){const[type,dist,time]=s.split('|');if(!type)continue;const k=WK[type]?type:'other';e.workouts.push({type:k,t:WK[k][0],dist:dist||'',time:time||'',src:'Здоровье'})}n++}
