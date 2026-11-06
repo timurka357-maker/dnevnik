@@ -353,7 +353,7 @@ html,body,button,label,.chip{touch-action:manipulation}
 <script>
 'use strict';
 /* ===== Дневник восстановления · данные хранятся только на этом устройстве (IndexedDB) ===== */
-const APP_VERSION = '2.1';
+const APP_VERSION = '2.2';
 const MON=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 const MONN=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 const WD=['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'], WDS=['вс','пн','вт','ср','чт','пт','сб'];
@@ -835,8 +835,9 @@ async function pasteHealth(){
 function applyParams(p,fromUrl,silent){
   const date=p.get('d')||(fromUrl?todayISO():ui.date);const e=norm(entry(date));const h=e.health;let n=0;
   const man=h.manual||{};const set=(k,v)=>{if(v!=null&&!isNaN(v)&&!man[k]){h[k]=v;n++}};
-  {let v=parseSleep(p.get('sl'));if(v!=null){if(v>1440)v=v/3600;else if(v>24)v=v/60;set('sl',Math.round(v*1000)/1000)}}for(const k of['sq','deep','rem','core','awake','rhr','hrv','kcal','exmin','stand','steps'])set(k,p.has(k)?Math.round(parseNum(p.get(k))):null);
-  for(const k of['km','w','resp','wtemp'])set(k,p.has(k)?Math.round(parseNum(p.get(k))*100)/100:null);
+  {let v=parseSleep(p.get('sl'));if(v!=null){if(v>1440)v=v/3600;else if(v>24)v=v/60;set('sl',Math.round(v*1000)/1000)}}const rn=(v,m)=>{const x=parseNum(v);return x==null?null:Math.round(x*m)/m};
+  for(const k of['sq','deep','rem','core','awake','rhr','hrv','kcal','exmin','stand','steps'])set(k,p.has(k)?rn(p.get(k),1):null);
+  for(const k of['km','w','resp','wtemp'])set(k,p.has(k)?rn(p.get(k),100):null);
   {const sy=parseNum(p.get('bps')),di=parseNum(p.get('bpd'));if(sy&&di){e.bp=(e.bp||[]).filter(r=>r.src!=='Здоровье');e.bp.push({sys:Math.round(sy),dia:Math.round(di),t:'',src:'Здоровье'});n++}}
   if(p.get('bed'))h.bed=p.get('bed');if(p.get('wake'))h.wake=p.get('wake');
   if(p.get('wk')){e.workouts=e.workouts.filter(w=>w.src!=='Здоровье');for(const s of p.get('wk').split(';')){const[type,dist,time]=s.split('|');if(!type)continue;const k=wkType(type);e.workouts.push({type:k,t:k==='other'?type.trim():WK[k][0],dist:dist||'',time:time||'',src:'Здоровье'})}n++}
