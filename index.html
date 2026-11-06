@@ -258,6 +258,11 @@ html,body,button,label,.chip{touch-action:manipulation}
 .mbtn.danger{background:var(--bad);color:#fff}
 .m .d.warn{color:var(--bad);font-weight:600}
 .chip.dim{opacity:.55}
+input[type=time].medtime{display:inline-block;vertical-align:baseline;font:inherit;font-size:13px;font-weight:600;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:2px 6px;width:auto;min-width:0}
+.med.edit{display:block;box-shadow:inset 0 0 0 1.5px var(--a1)}
+.medconf{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;font-size:14px;font-weight:600}
+.medconf input[type=time]{width:auto;font-size:18px;font-weight:700;padding:8px 12px}
+.hint2{font-size:11px;color:var(--muted);margin-top:2px}
 .mtag{font-size:10.5px;font-weight:600;color:var(--a1);background:var(--a-soft);padding:1px 6px;border-radius:99px;margin-left:4px}
 .wk .x{flex-direction:row;align-items:center;gap:6px}
 .form .seg,.form .chips{grid-column:1/-1}
@@ -358,7 +363,7 @@ html,body,button,label,.chip{touch-action:manipulation}
 <script>
 'use strict';
 /* ===== Дневник восстановления · данные хранятся только на этом устройстве (IndexedDB) ===== */
-const APP_VERSION = '2.6';
+const APP_VERSION = '2.7';
 const MON=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 const MONN=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 const WD=['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'], WDS=['вс','пн','вт','ср','чт','пт','сб'];
@@ -561,10 +566,14 @@ function today(){
   const meds=S.meds.filter(m=>m.active||e.meds[m.id]!=null).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
   const anyDue=meds.some(m=>medState(e,m,d)==='due');
   const medRow=m=>{const st=medState(e,m,d),r=e.meds[m.id]||{};
+    if(ui.medEdit===m.id){const def=r.at||(d===todayISO()?nowHM():(m.time||'08:00'));
+      return `<div class="med edit"><div style="min-width:0;flex:1"><div class="t">${esc(m.n)}</div><div class="s">${esc(r.dose||m.dose||'')}</div>
+        <div class="medconf"><span>Во сколько принял?</span><input type="time" id="medTimeIn" value="${esc(def)}" aria-label="Время приёма"></div>
+        <div class="mbtns" style="margin-top:10px"><button class="mbtn" data-medok="${m.id}">Подтвердить</button><button class="mbtn ghost" data-medcancel>Отмена</button>${r.st?`<button class="mbtn ghost" data-medundo="${m.id}">Снять отметку</button>`:''}</div></div></div>`}
     const sub=st==='taken'?`принял в ${esc(r.at||'')} · ${esc(r.dose||m.dose||'')}`:st==='skipped'?'пропущено':st==='due'?`пора принять · ${esc(m.time)} · ${esc(m.dose||'')}`:`${esc(m.time||'')} · ${esc(m.dose||'')}`;
-    const act=st==='taken'||st==='skipped'?`<button class="mstate ${st}" data-medundo="${m.id}" aria-label="Отменить отметку">${st==='taken'?'✓ принял':'пропустил'}</button>`:`<div class="mbtns"><button class="mbtn ghost" data-medskip="${m.id}">Пропустил</button><button class="mbtn" data-medtake="${m.id}">Принял</button></div>`;
+    const act=st==='taken'?`<button class="mstate taken" data-medtake="${m.id}" aria-label="Изменить время">✓ ${esc(r.at||'принял')}</button>`:st==='skipped'?`<button class="mstate skipped" data-medundo="${m.id}" aria-label="Отменить отметку">пропустил</button>`:`<div class="mbtns"><button class="mbtn ghost" data-medskip="${m.id}">Пропустил</button><button class="mbtn" data-medtake="${m.id}">Принял</button></div>`;
     return `<div class="med ${st}"><div style="min-width:0"><div class="t">${esc(m.n)}</div><div class="s">${sub}</div></div>${act}</div>`};
-  const medsC=`<section class="card${anyDue?' due-card':''}" data-sec="meds"><div class="ch">${h2('Препараты')}<span class="aside num">${meds.filter(m=>e.meds[m.id]?.st==='taken').length} из ${meds.length}</span></div>
+  const medsC=`<section class="card${anyDue?' due-card':''}" data-sec="meds"><div class="ch">${h2('Препараты')}<span class="aside num">${anyDue?'есть к приёму · ':''}${meds.filter(m=>e.meds[m.id]?.st==='taken').length} из ${meds.length}</span></div>
     ${e.medsNote?`<div class="sub" style="margin-bottom:4px">Из старой записи: ${esc(e.medsNote)}</div>`:''}
     <div class="medlist">${meds.map(medRow).join('')}</div>
     <button class="linkbtn" data-tab="more" data-goto="meds">Изменить список в «Ещё»</button>
@@ -912,6 +921,7 @@ function onInput(ev){
   else if(id==='search'){ui.q=t.value;clearTimeout(onInput.t);onInput.t=setTimeout(()=>{render(true);const s=$('search');s.focus();s.setSelectionRange(s.value.length,s.value.length)},250)}
   else if(t.dataset.h){const k=t.dataset.h;const v=k==='sl'?parseSleep(t.value):parseNum(t.value);e.health.manual??={};if(k==='sl'){for(const x of['deep','rem','core','awake'])delete e.health[x]}if(v==null){delete e.health[k];delete e.health.manual[k]}else{e.health[k]=v;e.health.manual[k]=true}if(!e.health.src)e.health.src='вручную';saveEntry(e)}
   else if(t.dataset.exstep){const x=exById(t.dataset.exstep);const v=Math.round(parseNum(t.value)||0);if(v>0){x.step=v;clearTimeout(onInput.es);onInput.es=setTimeout(saveSettings,300)}}
+  else if(t.dataset.medat){const r=e.meds[t.dataset.medat];if(r&&t.value){r.at=t.value;saveEntry(e)}}
   else if(t.dataset.medf){const m=S.meds.find(x=>x.id===t.dataset.id);if(m){m[t.dataset.medf]=t.value;clearTimeout(onInput.ms);onInput.ms=setTimeout(saveSettings,300)}}
   else if(t.dataset.runm!=null){e.workouts[+t.dataset.runm].runM=parseNum(t.value);saveEntry(e)}
 }
@@ -968,9 +978,11 @@ async function onClick(ev){
   if('addwk' in ds){ui.addWk=true;return rr()}
   if(ds.wkt){ui.wkT=ds.wkt;return rr()}
   if('wksave' in ds){const k=ui.wkT;e.workouts.push({type:k,t:WK[k][0],dist:$('wkDist').value.trim(),time:$('wkTime').value.trim(),src:'вручную'});ui.addWk=false;saveEntry(e);return rr()}
-  if(ds.medtake){const m=S.meds.find(x=>x.id===ds.medtake);e.meds[m.id]={n:m.n,st:'taken',at:ui.date===todayISO()?nowHM():(m.time||''),dose:m.dose||'',plan:m.time||''};saveEntry(e);toast(`${m.n.split(' (')[0]}: принято`);return rr()}
+  if(ds.medtake){ui.medEdit=ds.medtake;rr();return}
+  if(ds.medok){const m=S.meds.find(x=>x.id===ds.medok);const at=$('medTimeIn')?.value||nowHM();e.meds[m.id]={n:m.n,st:'taken',at,dose:m.dose||'',plan:m.time||''};ui.medEdit=null;saveEntry(e);toast(`${m.n.split(' (')[0]}: принято в ${at}`);return rr()}
+  if('medcancel' in ds){ui.medEdit=null;return rr()}
   if(ds.medskip){const m=S.meds.find(x=>x.id===ds.medskip);e.meds[m.id]={n:m.n,st:'skipped',dose:m.dose||'',plan:m.time||''};saveEntry(e);return rr()}
-  if(ds.medundo){delete e.meds[ds.medundo];saveEntry(e);return rr()}
+  if(ds.medundo){ui.medEdit=null;delete e.meds[ds.medundo];saveEntry(e);return rr()}
   if('addmed' in ds){ui.addMed=true;return rr()}
   if('medsave' in ds){const n=$('medName').value.trim();if(n){S.meds.push({id:'m'+uid(),n,dose:$('medDose').value.trim(),time:$('medTime').value||'08:00',active:true});await saveSettings()}ui.addMed=false;return rr()}
   if(ds.meddelask){ui.delMed=ds.meddelask;return rr()}
