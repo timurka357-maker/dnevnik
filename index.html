@@ -30,18 +30,19 @@ body{margin:0}
   --a2:color-mix(in srgb,var(--a1) 62%,var(--card)); --a3:color-mix(in srgb,var(--a1) 40%,var(--card)); --a-soft:color-mix(in srgb,var(--a1) 14%,var(--card));
   --sleep:var(--a1); --move:var(--a2); --ex:var(--a3); --weak:var(--a1); --rec:var(--a2); --bad:#B9524E;
   --glow:color-mix(in srgb,var(--a1) 22%,transparent);
+  --wt:var(--a3); --exb:#22A866; --goal:#1FA463;
   --f-d:"Unbounded","Onest",system-ui,sans-serif; --f-b:"Onest",-apple-system,system-ui,"Segoe UI",sans-serif;
 }
-:root[data-accent="multi"]{--a1-l:#30343B; --a1-d:#D9DDE4; --sleep:#5B5BE6; --move:#F2613F; --ex:#22A866; --weak:#E8930C; --rec:#1597B0}
+:root[data-accent="multi"]{--wt:#1597B0; --exb:#22A866; --a1-l:#30343B; --a1-d:#D9DDE4; --sleep:#5B5BE6; --move:#F2613F; --ex:#22A866; --weak:#E8930C; --rec:#1597B0}
 :root[data-accent="sky"]{--a1-l:#2F6F95; --a1-d:#8CC6E8}
 :root[data-accent="graphite"]{--a1-l:#30343B; --a1-d:#D9DDE4}
-@media (prefers-color-scheme: dark){:root[data-accent="multi"]:not([data-theme="light"]){--sleep:#8B8BFF; --move:#FF7A57; --ex:#3DDC8A; --weak:#FFB23E; --rec:#3CC8E0}}
+@media (prefers-color-scheme: dark){:root[data-accent="multi"]:not([data-theme="light"]){--wt:#3CC8E0; --exb:#3DDC8A; --sleep:#8B8BFF; --move:#FF7A57; --ex:#3DDC8A; --weak:#FFB23E; --rec:#3CC8E0}}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --a1:var(--a1-d); --base-bg:#08090C; --base-card:#131519; --ink:#F1F3F5; --muted:#8E949E; --line:color-mix(in srgb,var(--a1) 10%,#24272E);
+  --exb:#3DDC8A; --goal:#34D399; --a1:var(--a1-d); --base-bg:#08090C; --base-card:#131519; --ink:#F1F3F5; --muted:#8E949E; --line:color-mix(in srgb,var(--a1) 10%,#24272E);
   --on-a1:#0A0B0E; --on-ink:#08090C; --bad:#E0817C; --bg:color-mix(in srgb,var(--a1) 4%,var(--base-bg)); --card:color-mix(in srgb,var(--a1) 4%,var(--base-card)); --card-2:color-mix(in srgb,var(--a1) 8%,#1A1D22); color-scheme:dark}}
-:root[data-theme="dark"][data-accent="multi"]{--sleep:#8B8BFF; --move:#FF7A57; --ex:#3DDC8A; --weak:#FFB23E; --rec:#3CC8E0}
+:root[data-theme="dark"][data-accent="multi"]{--wt:#3CC8E0; --exb:#3DDC8A; --sleep:#8B8BFF; --move:#FF7A57; --ex:#3DDC8A; --weak:#FFB23E; --rec:#3CC8E0}
 :root[data-theme="dark"]{
-  --a1:var(--a1-d); --base-bg:#08090C; --base-card:#131519; --ink:#F1F3F5; --muted:#8E949E; --line:color-mix(in srgb,var(--a1) 10%,#24272E);
+  --exb:#3DDC8A; --goal:#34D399; --a1:var(--a1-d); --base-bg:#08090C; --base-card:#131519; --ink:#F1F3F5; --muted:#8E949E; --line:color-mix(in srgb,var(--a1) 10%,#24272E);
   --on-a1:#0A0B0E; --on-ink:#08090C; --bad:#E0817C; --bg:color-mix(in srgb,var(--a1) 4%,var(--base-bg)); --card:color-mix(in srgb,var(--a1) 4%,var(--base-card)); --card-2:color-mix(in srgb,var(--a1) 8%,#1A1D22); color-scheme:dark}
 *{box-sizing:border-box}
 html,body{background:var(--bg);color:var(--ink)}
@@ -239,6 +240,22 @@ input[type=time]{width:100%;font:inherit;font-size:16px;color:var(--ink);backgro
 .add.pulse{border-style:solid;border-color:var(--a1);color:var(--a1);animation:pl 1.2s ease-in-out infinite}
 @keyframes pl{50%{background:var(--a-soft)}}
 @media (prefers-reduced-motion:reduce){.add.pulse{animation:none}}
+
+html,body,button,label,.chip{touch-action:manipulation}
+.rings{grid-template-columns:repeat(3,1fr) 34px!important;align-items:start}
+.sober{display:flex;gap:8px;margin-top:12px;position:relative;z-index:1}
+.sober div{display:flex;align-items:baseline;gap:6px;background:var(--card-2);border-radius:99px;padding:6px 12px}
+.sober b{font-family:var(--f-d);font-size:16px;font-weight:700;line-height:1}
+.sober span{font-size:12px;color:var(--muted);white-space:nowrap}
+.thermo{display:flex;flex-direction:column;align-items:center;gap:4px}
+.thermo .tt{width:14px;height:84px;border-radius:7px;background:color-mix(in srgb,var(--exb) 20%,transparent);position:relative;overflow:hidden}
+.thermo .tt i{position:absolute;left:0;right:0;bottom:0;background:var(--exb);border-radius:7px}
+.thermo b{font-size:14px;font-weight:700}
+.thermo span{font-size:11px;color:var(--muted);margin-top:-4px}
+.linkbtn{font:inherit;font-size:13.5px;color:var(--a1);background:transparent;border:0;padding:10px 0 0;cursor:pointer}
+.linkbtn.danger{color:var(--bad);padding:0 4px}
+.medact{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}
+.mbtn.danger{background:var(--bad);color:#fff}
 .mtag{font-size:10.5px;font-weight:600;color:var(--a1);background:var(--a-soft);padding:1px 6px;border-radius:99px;margin-left:4px}
 .wk .x{flex-direction:row;align-items:center;gap:6px}
 .form .seg,.form .chips{grid-column:1/-1}
@@ -252,6 +269,74 @@ input[type=time]{width:100%;font:inherit;font-size:16px;color:var(--ink);backgro
 .pad{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 .pad button{aspect-ratio:1;border-radius:50%;border:0;background:var(--card);color:var(--ink);font:inherit;font-size:26px;cursor:pointer}
 
+
+/* ===== Цветной режим ===== */
+:root[data-accent="multi"]{--a1-l:#5B5BE6;--a1-d:#9A9AFF;--c-watch:#1597B0;--c-weak:#E8930C;--c-mood:#E0559A;--c-train:#22A866;--c-meds:#E5484D;--c-day:#7A5AF8;--c-stool:#A0703C;--c-note:#5B5BE6;--c-sick:#E5484D;--c-waist:#F2613F;--c-good:#22A866;--c-mid:#E8930C;--c-bad:#E5484D}
+@media (prefers-color-scheme: dark){:root[data-accent="multi"]:not([data-theme="light"]){--c-watch:#3CC8E0;--c-weak:#FFB23E;--c-mood:#FF7AB8;--c-train:#3DDC8A;--c-meds:#FF6B6F;--c-day:#A48BFF;--c-stool:#D9A066;--c-note:#9A9AFF;--c-sick:#FF6B6F;--c-waist:#FF7A57;--c-good:#3DDC8A;--c-mid:#FFB23E;--c-bad:#FF6B6F}}
+:root[data-theme="dark"][data-accent="multi"]{--c-watch:#3CC8E0;--c-weak:#FFB23E;--c-mood:#FF7AB8;--c-train:#3DDC8A;--c-meds:#FF6B6F;--c-day:#A48BFF;--c-stool:#D9A066;--c-note:#9A9AFF;--c-sick:#FF6B6F;--c-waist:#FF7A57;--c-good:#3DDC8A;--c-mid:#FFB23E;--c-bad:#FF6B6F}
+[data-accent="multi"] .card[data-sec="watch"]{--sc:var(--c-watch)}
+[data-accent="multi"] .card[data-sec="weak"]{--sc:var(--c-weak)}
+[data-accent="multi"] .card[data-sec="mood"]{--sc:var(--c-mood)}
+[data-accent="multi"] .card[data-sec="train"]{--sc:var(--c-train)}
+[data-accent="multi"] .card[data-sec="meds"]{--sc:var(--c-meds)}
+[data-accent="multi"] .card[data-sec="day"]{--sc:var(--c-day)}
+[data-accent="multi"] .card[data-sec="stool"]{--sc:var(--c-stool)}
+[data-accent="multi"] .card[data-sec="note"]{--sc:var(--c-note)}
+[data-accent="multi"] .card[data-sec="sick"]{--sc:var(--c-sick)}
+[data-accent="multi"] .card[data-sec="waist"]{--sc:var(--c-waist)}
+[data-accent="multi"] .card[data-sec]{background:linear-gradient(180deg,color-mix(in srgb,var(--sc) 9%,var(--card)),var(--card) 70%)}
+[data-accent="multi"] .card[data-sec] .h2{color:var(--sc);display:flex;align-items:center;gap:8px}
+[data-accent="multi"] .card[data-sec] .h2::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--sc);flex:none}
+[data-accent="multi"] .card[data-sec] .chip[aria-pressed="true"]{background:var(--sc);border-color:var(--sc);color:#fff}
+[data-accent="multi"] .card[data-sec] .seg button[aria-pressed="true"]{background:var(--sc);color:#fff}
+[data-accent="multi"] .card[data-sec] .tog[aria-pressed="true"]{background:var(--sc)}
+[data-accent="multi"] .card[data-sec] .step button{background:color-mix(in srgb,var(--sc) 16%,var(--card));color:var(--sc)}
+[data-accent="multi"] .card[data-sec] .add{border-color:color-mix(in srgb,var(--sc) 45%,transparent);color:var(--sc)}
+[data-accent="multi"] .card[data-sec] .rec,[data-accent="multi"] .card[data-sec] .badge{color:var(--sc)}
+[data-accent="multi"] .scale button.lv1{color:var(--c-good)}[data-accent="multi"] .scale button.lv2{color:var(--c-mid)}[data-accent="multi"] .scale button.lv3{color:var(--c-bad)}
+[data-accent="multi"] .scale button.lv1[aria-pressed="true"]{background:var(--c-good);color:#fff}
+[data-accent="multi"] .scale button.lv2[aria-pressed="true"]{background:var(--c-mid);color:#fff}
+[data-accent="multi"] .scale button.lv3[aria-pressed="true"]{background:var(--c-bad);color:#fff}
+[data-accent="multi"] .mood .m1[aria-pressed="true"]{background:#E5484D;color:#fff}
+[data-accent="multi"] .mood .m2[aria-pressed="true"]{background:#F2613F;color:#fff}
+[data-accent="multi"] .mood .m3[aria-pressed="true"]{background:#E8930C;color:#fff}
+[data-accent="multi"] .mood .m4[aria-pressed="true"]{background:#7FB536;color:#fff}
+[data-accent="multi"] .mood .m5[aria-pressed="true"]{background:#22A866;color:#fff}
+[data-accent="multi"] .mood button{color:color-mix(in srgb,var(--c-mood) 70%,var(--muted))}
+[data-accent="multi"] .hero{background:linear-gradient(140deg,color-mix(in srgb,var(--sleep) 20%,var(--card)) 0%,var(--card) 55%,color-mix(in srgb,var(--move) 16%,var(--card)) 100%)}
+[data-accent="multi"] .sober div:first-child{background:color-mix(in srgb,var(--c-train) 18%,var(--card))}
+[data-accent="multi"] .sober div:last-child{background:color-mix(in srgb,var(--c-watch) 18%,var(--card))}
+[data-accent="multi"] .med.taken .mstate{background:color-mix(in srgb,var(--c-good) 18%,var(--card));color:var(--c-good)}
+[data-accent="multi"] .wk .ic{background:color-mix(in srgb,var(--c-train) 18%,var(--card))}
+[data-accent="multi"] .wk .ic svg{stroke:var(--c-train)}
+[data-accent="multi"] .tab[data-tab="today"][aria-selected="true"]{color:var(--sleep);background:color-mix(in srgb,var(--sleep) 15%,transparent)}
+[data-accent="multi"] .tab[data-tab="diary"][aria-selected="true"]{color:var(--c-mood);background:color-mix(in srgb,var(--c-mood) 15%,transparent)}
+[data-accent="multi"] .tab[data-tab="charts"][aria-selected="true"]{color:var(--c-train);background:color-mix(in srgb,var(--c-train) 15%,transparent)}
+[data-accent="multi"] .tab[data-tab="links"][aria-selected="true"]{color:var(--c-weak);background:color-mix(in srgb,var(--c-weak) 15%,transparent)}
+[data-accent="multi"] .tab[data-tab="more"][aria-selected="true"]{color:var(--c-watch);background:color-mix(in srgb,var(--c-watch) 15%,transparent)}
+[data-accent="multi"] .tag.w{background:color-mix(in srgb,var(--c-weak) 16%,var(--card));color:var(--c-weak)}
+[data-accent="multi"] .entry .eh b{color:var(--sleep)}
+[data-accent="multi"] .bar .fill:not(.c){background:var(--c-weak)}
+
+.seg.emo button{font-size:13.5px}
+.bar .fill.e0{background:var(--a3)}.bar .fill.e1{background:var(--a2)}.bar .fill.e2,.bar .fill.e3{background:var(--a1)}
+:root[data-accent="multi"]{--c-emo:#0EA5A0}
+@media (prefers-color-scheme: dark){:root[data-accent="multi"]:not([data-theme="light"]){--c-emo:#2DD4BF}}
+:root[data-theme="dark"][data-accent="multi"]{--c-emo:#2DD4BF}
+[data-accent="multi"] .card[data-sec="emo"]{--sc:var(--c-emo)}
+[data-accent="multi"] .card .seg.emo .e0[aria-pressed="true"]{background:#22A866;color:#fff}
+[data-accent="multi"] .card .seg.emo .e1[aria-pressed="true"]{background:#7FB536;color:#fff}
+[data-accent="multi"] .card .seg.emo .e2[aria-pressed="true"]{background:#E8930C;color:#fff}
+[data-accent="multi"] .card .seg.emo .e3[aria-pressed="true"]{background:#E5484D;color:#fff}
+[data-accent="multi"] .bar .fill.e0{background:#22A866}[data-accent="multi"] .bar .fill.e1{background:#7FB536}[data-accent="multi"] .bar .fill.e2{background:#E8930C}[data-accent="multi"] .bar .fill.e3{background:#E5484D}
+
+.bpform{display:grid;grid-template-columns:1fr auto 1fr 1fr auto;gap:6px;align-items:center;margin-top:8px}
+.bpform input{width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--card-2);border:1px solid transparent;border-radius:12px;padding:10px 8px;text-align:center;min-width:0}
+.bpform span{color:var(--muted)}
+.ring.ok .l{color:var(--goal);font-weight:600}
+.thermo.ok b{color:var(--goal)}
+:root[data-accent="multi"]{--c-bp:#E5484D}
+[data-accent="multi"] .card[data-sec="bp"]{--sc:var(--c-bp)}
 </style>
 </head>
 <body>
@@ -262,7 +347,7 @@ input[type=time]{width:100%;font:inherit;font-size:16px;color:var(--ink);backgro
 <script>
 'use strict';
 /* ===== Дневник восстановления · данные хранятся только на этом устройстве (IndexedDB) ===== */
-const APP_VERSION = '1.5';
+const APP_VERSION = '2.1';
 const MON=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 const MONN=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 const WD=['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'], WDS=['вс','пн','вт','ср','чт','пт','сб'];
@@ -303,14 +388,15 @@ const DEFAULTS={
   exercises:[
     {id:'plank',n:'Планка',u:'s',step:5,active:true},{id:'hang',n:'Вис на турнике',u:'s',step:5,active:true},
     {id:'squat',n:'Приседания',u:'n',step:5,active:true},{id:'push',n:'Отжимания',u:'n',step:1,active:true},
-    {id:'pushk',n:'Отжимания с колен',u:'n',step:1,active:false},
+    {id:'pushk',n:'Отжимания с колен',u:'n',step:1,active:false,deleted:true},
     {id:'kb_swing',n:'Гиря, мах',u:'n',step:5,kg:6,active:true},{id:'kb_lift',n:'Гиря, подъём на руку',u:'n',step:1,kg:6,active:true},
     {id:'abs',n:'Пресс',u:'n',step:5,active:false}],
-  causes:['Руль','Работа руками','Гиря, турник','Гребля','Долгая ходьба','Бег','Недосып','Стресс','Холод','Простуда','Не знаю'],
+  causes:['Руль','Работа руками','Гиря, турник','Гребля','Долгая ходьба','Бег','Недосып','Холод','Простуда','Болезнь','Не знаю'],
   dayTypes:['Рабочий день','Выходной','Командировка','Дорога','Природа, поход','Рыбалка','Праздник','Баня'],
+  emoWhy:['Работа','Семья','Дорога','Деньги','Здоровье'],
   symptoms:['Насморк','Горло','Кашель','Ломота','Головная боль','Слабость во всём теле'],
   sober:{alc:'2025-12-28',smoke:'2026-01-30'},
-  goals:{sleep:7.5,steps:10000,exmin:30},
+  goals:{sleep:7.5,steps:10000,exmin:30,weight:72,wStart:95.95},
   pin:null, lastExport:null,
 };
 let S=structuredClone(DEFAULTS);   // settings
@@ -322,7 +408,7 @@ const saveTimers={};
 function saveEntry(e){e.updated=Date.now();E.set(e.date,e);clearTimeout(saveTimers[e.date]);saveTimers[e.date]=setTimeout(()=>DB.put(e).catch(err=>toast('Не удалось сохранить: '+err.message)),250)}
 function entry(date){return E.get(date)||{date,health:{},ex:{},workouts:[],causes:[],dayType:[],sym:[],meds:{}}}
 function norm(e){e.health??={};e.ex??={};e.workouts??=[];e.causes??=[];e.dayType??=[];e.sym??=[];e.meds??={};return e}
-const hasContent=e=>e&&(Object.keys(e.meds||{}).length||e.note||e.arms!=null||e.legs!=null||Object.keys(e.health||{}).length||Object.keys(e.ex||{}).length||(e.workouts||[]).length||e.mood);
+const hasContent=e=>e&&((e.bp||[]).length||e.emo!=null||Object.keys(e.meds||{}).length||e.note||e.arms!=null||e.legs!=null||Object.keys(e.health||{}).length||Object.keys(e.ex||{}).length||(e.workouts||[]).length||e.mood);
 const dayN=date=>daysBetween(S.start,date)+1;
 
 /* ---------- helpers ---------- */
@@ -340,23 +426,26 @@ const chip=(attr,val,on,extra='')=>`<button class="chip" ${attr}="${esc(val)}" a
 const MOODS=[['плохо','M8 16c1.2-1.5 2.5-2 4-2s2.8.5 4 2'],['так себе','M8.5 15.5h7'],['норм','M8.5 15c1 .8 2.2 1.2 3.5 1.2s2.5-.4 3.5-1.2'],['хорошо','M8 14.5c1.1 1.6 2.4 2.3 4 2.3s2.9-.7 4-2.3'],['отлично','M7.5 13.5h9c-.6 2.4-2.4 3.8-4.5 3.8s-3.9-1.4-4.5-3.8z']];
 const face=m=>`<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="10" r=".6" fill="currentColor"/><circle cx="15" cy="10" r=".6" fill="currentColor"/><path d="${m}"/></svg>`;
 const WK={walk:['Прогулка','<circle cx="13" cy="4.5" r="1.6"/><path d="M10 21l2-6 3 3v3M9 11l3-3 3 3 2 1M12 8l-1 5"/>'],run:['Бег','<circle cx="14" cy="4.5" r="1.6"/><path d="M7 21l3-5 3 2 1 3M8 12l3-3 4 1 2 3M11 9l-1 5"/>'],swim:['Бассейн','<path d="M3 17c2 0 2-1.5 4.5-1.5S10 17 12 17s2.5-1.5 4.5-1.5S19 17 21 17"/><circle cx="16" cy="7" r="1.6"/><path d="M6 13l4-4 3 2 3-1"/>'],bike:['Велосипед','<circle cx="6" cy="16" r="3.5"/><circle cx="18" cy="16" r="3.5"/><path d="M6 16l4-7h5l3 7M10 9l2 7"/>'],gym:['Силовая','<path d="M4 12h16M7 8v8M17 8v8M4 10v4M20 10v4"/>'],ski:['Лыжи','<circle cx="14" cy="4.5" r="1.6"/><path d="M4 20l16-4M9 17l3-6 3 2M12 11l2-3"/>'],other:['Другое','<circle cx="12" cy="12" r="7"/><path d="M12 8v4l2 2"/>']};
+const wkType=x=>{const v=String(x).toLowerCase();if(WK[v])return v;return /ходьб|walk|прогул/.test(v)?'walk':/бег|run/.test(v)?'run':/плав|swim|бассейн/.test(v)?'swim':/вело|cycl|bike/.test(v)?'bike':/сил|strength|функц/.test(v)?'gym':/лыж|ski/.test(v)?'ski':'other'};
 const WK_TYPES=[['walk','Прогулка'],['run','Бег'],['swim','Бассейн'],['bike','Велосипед'],['gym','Силовая'],['ski','Лыжи'],['other','Другое']];
 const ARM_CAUSES=['Руль','Работа руками','Гиря, турник','Гребля'];
 
-function ring(val,max,color,label,sub){
-  const r=34,c=2*Math.PI*r,p=val==null?0:Math.min(val/max,1);
-  return `<div class="ring"><svg viewBox="0 0 84 84" aria-hidden="true"><circle cx="42" cy="42" r="${r}" fill="none" stroke="${color}" stroke-opacity=".16" stroke-width="9"/>${p?`<circle cx="42" cy="42" r="${r}" fill="none" stroke="${color}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${(c*p).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 42 42)"/>`:''}</svg><div class="v num">${label}</div><div class="l">${sub}</div></div>`;
+function ring(val,max,color,label,sub,done){
+  const r=34,c=2*Math.PI*r,p=val==null?0:Math.min(val/max,1),ok=done??(val!=null&&val>=max);const col=ok?'var(--goal)':color;
+  return `<div class="ring${ok?' ok':''}"><svg viewBox="0 0 84 84" aria-hidden="true"><circle cx="42" cy="42" r="${r}" fill="none" stroke="${col}" stroke-opacity=".16" stroke-width="9"/>${p?`<circle cx="42" cy="42" r="${r}" fill="none" stroke="${col}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${(c*p).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 42 42)"/>`:''}${ok?`<path d="M33 43l6 6 12-13" fill="none" stroke="${col}" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>`:''}</svg><div class="v num">${label}</div><div class="l">${sub}</div></div>`;
 }
 function scale(e,key,title){
   const v=e[key];
   return `<div class="scale-row"><div class="scale-head"><b>${title}</b><span class="val num">${v==null?'не отмечено':`${v} · ${weakWord(v)}`}</span></div>
-  <div class="scale" role="radiogroup" aria-label="${title}">${Array.from({length:11},(_,i)=>`<button role="radio" data-scale="${key}" data-v="${i}" aria-pressed="${i===v}" aria-checked="${i===v}">${i}</button>`).join('')}</div></div>`;
+  <div class="scale" role="radiogroup" aria-label="${title}">${Array.from({length:11},(_,i)=>`<button role="radio" class="lv${i<=2?1:i<=5?2:3}" data-scale="${key}" data-v="${i}" aria-pressed="${i===v}" aria-checked="${i===v}">${i}</button>`).join('')}</div></div>`;
 }
 
+const EMO=['спокойно','немного','заметно','сорвался'];
+const causesOf=e=>[...(e.causes||[]),...(e.emo>=2?['Нервный день']:[])];
 /* ---------- meds ---------- */
 const nowHM=()=>{const d=new Date();return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`};
 function medState(e,m,date){const r=e.meds?.[m.id];if(r?.st==='taken')return'taken';if(r?.st==='skipped')return'skipped';const t=todayISO();if(date===t)return m.time&&nowHM()>=m.time?'due':'pending';return date<t?'unmarked':'pending'}
-function medLine(e,m){const r=e.meds?.[m.id];if(!r)return null;const nm=m.n.split(' (')[0];return r.st==='taken'?`${nm} ${r.dose||m.dose||''} ✓ ${r.at||''}`.replace(/\s+/g,' ').trim():r.st==='skipped'?`${nm} — пропущено`:null}
+function medLine(e,m){const r=e.meds?.[m.id];if(!r)return null;const nm=(r.n||m.n).split(' (')[0];return r.st==='taken'?`${nm} ${r.dose||m.dose||''} ✓ ${r.at||''}`.replace(/\s+/g,' ').trim():r.st==='skipped'?`${nm} — пропущено`:null}
 /* ---------- stats ---------- */
 function streak(){let d=todayISO();if(!hasContent(E.get(d)))d=addDays(d,-1);let n=0;while(hasContent(E.get(d))){n++;d=addDays(d,-1)}return n}
 function exHistory(id,before,kg){
@@ -366,6 +455,7 @@ function exHistory(id,before,kg){
     if(d<before&&(!lastDate||d>lastDate)){lastDate=d;last=x}}
   return{last,best};
 }
+function lastWeight(d){for(let i=0;i<=14;i++){const x=E.get(addDays(d,-i));if(x?.health?.w)return{v:x.health.w,d:x.date}}return null}
 function prevWaist(before){let best=null;for(const[d,e]of E)if(e.waist&&d<before&&(!best||d>best.d))best={d,v:e.waist};return best}
 function weightWeekDelta(date){const e=E.get(date);if(!e?.health?.w)return null;let ref=null;for(let i=6;i<=9;i++){const p=E.get(addDays(date,-i));if(p?.health?.w){ref=p.health.w;break}}return ref==null?null:e.health.w-ref}
 
@@ -385,19 +475,23 @@ function weeklyBanner(){
 }
 function today(){
   const d=ui.date,e=norm(entry(d)),h=e.health,n=dayN(d),dt=pd(d),isToday=d===todayISO();
-  const prev=E.get(addDays(d,-1)),sickUp=e.sick||prev?.sick;
-  const b=BADGES();
-  const hero=`<section class="hero">
+  const prev=E.get(addDays(d,-1)),sickUp=!!prev?.sick;
+  const lw=lastWeight(d),wp=lw?Math.max(0,(S.goals.wStart-lw.v)/(S.goals.wStart-S.goals.weight)):null;
+  const t0=todayISO(),alc=daysBetween(S.sober.alc,t0),smk=daysBetween(S.sober.smoke,t0);
+  const exP=h.exmin!=null?Math.min(h.exmin/S.goals.exmin,1):0;
+  const hero=`<section class="hero" id="hero">
     <div class="datenav"><button data-nav="-1" aria-label="Предыдущий день">‹</button><span>${isToday?'сегодня':WD[dt.getDay()]}</span><button data-nav="1" aria-label="Следующий день" ${isToday?'disabled':''}>›</button></div>
-    <div class="hero-top"><div class="day num">День ${n}<small>${WD[dt.getDay()]}, ${dt.getDate()} ${MON[dt.getMonth()]}</small></div><button class="streak num" data-badge>${b[ui.badge%3]}</button></div>
-    <div class="rings">${ring(h.sl,S.goals.sleep,'var(--sleep)',h.sl!=null?fmtHM(h.sl):'—',`сон<br>цель ${fmtHM(S.goals.sleep)}`)}${ring(h.steps,S.goals.steps,'var(--move)',h.steps!=null?nf(h.steps):'—',`шагов<br>${h.km!=null?dec(h.km)+' км':'цель '+nf(S.goals.steps)}`)}${ring(h.exmin,S.goals.exmin,'var(--ex)',h.exmin!=null?h.exmin+' мин':'—',`упражнения<br>цель ${S.goals.exmin}`)}</div>
+    <div class="hero-top"><div class="day num">День ${n}<small>${WD[dt.getDay()]}, ${dt.getDate()} ${MON[dt.getMonth()]}</small></div></div>
+    <div class="sober num"><div><b>${alc}</b><span>без алкоголя</span></div><div><b>${smk}</b><span>без сигарет</span></div></div>
+    <div class="rings">${ring(h.sl,S.goals.sleep,'var(--sleep)',h.sl!=null?fmtHM(h.sl):'—',`сон<br>цель ${fmtHM(S.goals.sleep)}`)}${ring(h.steps,S.goals.steps,'var(--move)',h.steps!=null?nf(h.steps):'—',`шагов<br>${h.km!=null?dec(h.km)+' км':'цель '+nf(S.goals.steps)}`)}${ring(wp==null?null:wp,1,'var(--wt)',lw?dec(lw.v):'—',`вес${lw&&lw.d!==d?' '+pd(lw.d).getDate()+'.'+String(pd(lw.d).getMonth()+1).padStart(2,'0'):''}<br>цель ${dec(S.goals.weight)}`,lw?lw.v<=S.goals.weight:false)}
+      <div class="thermo${h.exmin!=null&&h.exmin>=S.goals.exmin?' ok':''}" aria-label="Упражнения ${h.exmin??0} из ${S.goals.exmin} минут"><div class="tt"><i style="height:${Math.round(exP*100)}%"></i></div><b class="num">${h.exmin??'—'}</b><span>мин</span></div></div>
   </section>`;
   const peek=[h.sl!=null&&`сон <b>${fmtHM(h.sl)}${h.sq!=null?' · '+h.sq:''}</b>`,h.rhr!=null&&`пульс <b>${h.rhr}</b>`,h.hrv!=null&&`ВСР <b>${h.hrv}</b>`,h.wtemp!=null&&`t° <b>${h.wtemp>0?'+':''}${dec(h.wtemp)}</b>`,h.w!=null&&`вес <b>${dec(h.w)}</b>`].filter(Boolean);
   const wd=weightWeekDelta(d);
   const mk=k=>h.manual?.[k]?' <span class="mtag">исправлено</span>':'';
   const tile=(k,label,val,unit,sub,inputVal,mode='decimal')=>ui.editHealth?`<label class="m"><span class="k">${label}</span><input class="hin" data-h="${k}" inputmode="${mode}" value="${esc(inputVal??'')}" placeholder="—"><span class="d">${unit}</span></label>`:`<div class="m"><div class="k">${label}${mk(k)}</div><div class="v num">${val??'—'}${val!=null&&unit?`<span>${unit}</span>`:''}</div>${sub?`<div class="d">${sub}</div>`:''}</div>`;
   const stages=h.deep!=null||h.rem!=null||h.core!=null;
-  const watch=`<section class="card"><button class="collapse" data-watch aria-expanded="${ui.watchOpen}">${h2('Apple Watch')}<span class="sub">${h.src?esc(h.src):Object.keys(h).length?'из заметок':'нет данных'} <span class="chev" aria-hidden="true">›</span></span></button>
+  const watch=`<section class="card" data-sec="watch"><button class="collapse" data-watch aria-expanded="${ui.watchOpen}">${h2('Apple Watch')}<span class="sub">${h.src?esc(h.src):Object.keys(h).length?'из заметок':'нет данных'} <span class="chev" aria-hidden="true">›</span></span></button>
     ${ui.watchOpen?`<div class="mgrid" style="margin-top:12px">
       ${ui.editHealth?`<label class="m"><span class="k">Сон, ч:мин</span><input class="hin" data-h="sl" inputmode="text" value="${h.sl!=null?fmtHM(h.sl):''}" placeholder="6:49"><span class="d">длительность</span></label>`+tile('sq','Оценка сна',0,'0–100','',h.sq,'numeric'):
        `<div class="m wide"><div class="k">Сон${h.sq!=null?' · оценка '+h.sq:''}${mk('sl')}</div><div class="v num">${h.sl!=null?fmtSleep(h.sl):'—'}${h.bed?`<span>${esc(h.bed)} → ${esc(h.wake||'')}</span>`:''}</div>
@@ -418,20 +512,26 @@ function today(){
     ${ui.pasteBox?`<div class="inline"><input type="text" id="pasteIn" placeholder="Вставь сюда текст из Команды"><button class="btn sm" data-pasteok style="width:auto">Готово</button></div>`:''}
   </section>`;
   const allCauses=[...new Set([...S.causes,...e.causes])];
-  const weak=`<section class="card"><div class="ch">${h2('Слабость за день')}<span class="aside">0 — нет · 10 — худшие дни</span></div>
+  const weak=`<section class="card" data-sec="weak"><div class="ch">${h2('Слабость за день')}<span class="aside">0 — нет · 10 — худшие дни</span></div>
     ${scale(e,'arms','Руки')}${scale(e,'legs','Ноги, походка')}
     <div class="divider"></div><div class="lbl" style="margin-bottom:10px">Что могло повлиять</div>
     <div class="chips">${allCauses.map(c=>chip('data-cause',c,e.causes.includes(c))).join('')}${ui.addCause?'':'<button class="chip add-chip" data-addcause>+ своё</button>'}</div>
     ${ui.addCause?`<div class="inline"><input type="text" id="causeIn" placeholder="Например: таскал мебель" enterkeyhint="done"><button class="btn sm" data-causesave style="width:auto">Добавить</button></div>`:''}
     ${e.causes.includes('Руль')?`<div class="row" style="padding-bottom:0;margin-top:6px"><div><div class="t">За рулём</div><div class="s">часов за день</div></div><div class="step"><button data-drive="-1" aria-label="Меньше">−</button><output class="num">${e.drive??0} ч</output><button data-drive="1" aria-label="Больше">+</button></div></div>`:''}
   </section>`;
-  const mood=`<section class="card"><div class="ch">${h2('Самочувствие')}<span class="aside">в целом за день</span></div>
-    <div class="mood">${MOODS.map(([l,m],i)=>`<button data-mood="${i+1}" aria-pressed="${e.mood===i+1}">${face(m)}${l}</button>`).join('')}</div></section>`;
-  const exList=S.exercises.filter(x=>x.active||e.ex[x.id]);
+  const mood=`<section class="card" data-sec="mood"><div class="ch">${h2('Самочувствие')}<span class="aside">в целом за день</span></div>
+    <div class="mood">${MOODS.map(([l,m],i)=>`<button class="m${i+1}" data-mood="${i+1}" aria-pressed="${e.mood===i+1}">${face(m)}${l}</button>`).join('')}</div></section>`;
+  const emoC=`<section class="card" data-sec="emo"><div class="ch">${h2('Эмоции')}<span class="aside">нервные моменты за день</span></div>
+    <div class="seg emo">${EMO.map((l,i)=>`<button class="e${i}" data-emo="${i}" aria-pressed="${e.emo===i}">${l}</button>`).join('')}</div>
+    ${e.emo>=1?`<div class="lbl" style="margin:14px 0 8px">Из-за чего</div><div class="chips">${[...new Set([...S.emoWhy,...(e.emoWhy||[])])].map(c=>chip('data-emowhy',c,(e.emoWhy||[]).includes(c))).join('')}${ui.addEmo?'':'<button class="chip add-chip" data-addemo>+ своё</button>'}</div>
+    ${ui.addEmo?`<div class="inline"><input type="text" id="emoIn" placeholder="Например: очередь в поликлинике" enterkeyhint="done"><button class="btn sm" data-emosave style="width:auto">Добавить</button></div>`:''}
+    <div class="row" style="padding-bottom:0;margin-top:6px"><div><div class="t">Сдержался</div><div class="s">вовремя остановил себя, не сорвался</div></div><button class="tog" data-held aria-pressed="${!!e.held}" aria-label="Сдержался"></button></div>`:''}
+  </section>`;
+  const exList=S.exercises.filter(x=>(x.active&&!x.deleted)||e.ex[x.id]);
   const exRows=exList.map(x=>{const cur=e.ex[x.id]||{};const kg=cur.kg??x.kg;const {last,best}=exHistory(x.id,d,kg);const v=cur.v||0;const rec=v&&best&&v>best;
     return `<div class="row"><div><div class="t">${esc(x.n)}${kg!=null?`<button class="kg" data-kg="${x.id}">${dec(kg)} кг</button>`:''}${rec?'<span class="badge">рекорд</span>':''}</div><div class="s num">${last?`прошлый ${fmtEx(x,last.v)}`:'ещё не было'}${best?` · лучший ${fmtEx(x,best)}`:''}</div></div><div class="step"><button data-ex="${x.id}" data-d="-1" aria-label="Меньше">−</button><output class="num ${rec?'rec':''}">${v?fmtEx(x,v):'—'}</output><button data-ex="${x.id}" data-d="1" aria-label="Больше">+</button></div></div>
     ${ui.kgOpen[x.id]?`<div class="row" style="border-top:0;padding-top:0"><div class="s">Вес снаряда. Рекорды считаются отдельно для каждого веса.</div><div class="step"><button data-kgd="${x.id}" data-d="-1" aria-label="Легче">−</button><output class="num">${dec(kg)} кг</output><button data-kgd="${x.id}" data-d="1" aria-label="Тяжелее">+</button></div></div>`:''}`}).join('');
-  const train=`<section class="card"><div class="ch">${h2('Тренировки')}<span class="aside">нажми на вес, чтобы сменить</span></div>
+  const train=`<section class="card" data-sec="train"><div class="ch">${h2('Тренировки')}<span class="aside">нажми на вес, чтобы сменить</span></div>
     <div class="lbl" style="margin-bottom:8px">Зарядка</div>
     <div class="seg">${['сделана','частично','пропущена'].map(s=>`<button data-charge="${s}" aria-pressed="${e.charge===s}">${s}</button>`).join('')}</div>
     <div style="margin-top:6px">${exRows}</div>
@@ -448,25 +548,32 @@ function today(){
     const sub=st==='taken'?`принял в ${esc(r.at||'')} · ${esc(r.dose||m.dose||'')}`:st==='skipped'?'пропущено':st==='due'?`пора принять · ${esc(m.time)} · ${esc(m.dose||'')}`:`${esc(m.time||'')} · ${esc(m.dose||'')}`;
     const act=st==='taken'||st==='skipped'?`<button class="mstate ${st}" data-medundo="${m.id}" aria-label="Отменить отметку">${st==='taken'?'✓ принял':'пропустил'}</button>`:`<div class="mbtns"><button class="mbtn ghost" data-medskip="${m.id}">Пропустил</button><button class="mbtn" data-medtake="${m.id}">Принял</button></div>`;
     return `<div class="med ${st}"><div style="min-width:0"><div class="t">${esc(m.n)}</div><div class="s">${sub}</div></div>${act}</div>`};
-  const medsC=`<section class="card${anyDue?' due-card':''}"><div class="ch">${h2('Препараты')}<span class="aside num">${meds.filter(m=>e.meds[m.id]?.st==='taken').length} из ${meds.length}</span></div>
+  const medsC=`<section class="card${anyDue?' due-card':''}" data-sec="meds"><div class="ch">${h2('Препараты')}<span class="aside num">${meds.filter(m=>e.meds[m.id]?.st==='taken').length} из ${meds.length}</span></div>
     ${e.medsNote?`<div class="sub" style="margin-bottom:4px">Из старой записи: ${esc(e.medsNote)}</div>`:''}
     <div class="medlist">${meds.map(medRow).join('')}</div>
-    ${ui.addMed?`<div class="form"><input type="text" class="full" id="medName" placeholder="Название"><input type="text" id="medDose" placeholder="Доза: 2000 МЕ"><input type="time" id="medTime" value="08:00" aria-label="Время приёма"><button class="btn sm full" data-medsave>Добавить в список</button></div><div class="sub" style="margin-top:8px">Перед новым препаратом спроси Claude о совместимости: в профиле есть запрет на высокий B6.</div>`:`<button class="add" data-addmed>+ Добавить препарат</button>`}
+    <button class="linkbtn" data-tab="more" data-goto="meds">Изменить список в «Ещё»</button>
   </section>`;
-  const dayType=`<section class="card"><div class="ch">${h2('Какой был день')}</div><div class="chips">${[...new Set([...S.dayTypes,...e.dayType])].map(t=>chip('data-daytype',t,e.dayType.includes(t))).join('')}</div></section>`;
-  const stool=`<section class="card"><div class="ch">${h2('Стул')}</div><div class="seg">${['норма','жидкий','твёрдый'].map(s=>`<button data-stool="${s}" aria-pressed="${e.stool===s}">${s}</button>`).join('')}</div>${e.stoolNote?`<div class="sub" style="margin-top:8px">${esc(e.stoolNote)}</div>`:''}</section>`;
-  const note=`<section class="card"><div class="ch">${h2('Мысли и заметки')}</div><textarea id="note" aria-label="Мысли и заметки" placeholder="Как прошёл день, что радовало, что беспокоило">${esc(e.note||'')}</textarea></section>`;
-  const sick=`<section class="card"><div class="row" style="padding:0"><div>${h2('Болезнь')}<div class="s">${prev?.sick&&!e.sick?'вчера отмечал — как сегодня?':'простуда, недомогание, температура'}</div></div><button class="tog" data-sick aria-pressed="${!!e.sick}" aria-label="Болею"></button></div>
+  const dayType=`<section class="card" data-sec="day"><div class="ch">${h2('Какой был день')}</div><div class="chips">${[...new Set([...S.dayTypes,...e.dayType])].map(t=>chip('data-daytype',t,e.dayType.includes(t))).join('')}</div></section>`;
+  const stool=`<section class="card" data-sec="stool"><div class="ch">${h2('Стул')}</div><div class="seg">${['норма','жидкий','твёрдый'].map(s=>`<button data-stool="${s}" aria-pressed="${e.stool===s}">${s}</button>`).join('')}</div>${e.stoolNote?`<div class="sub" style="margin-top:8px">${esc(e.stoolNote)}</div>`:''}</section>`;
+  const note=`<section class="card" data-sec="note"><div class="ch">${h2('Мысли и заметки')}</div><textarea id="note" aria-label="Мысли и заметки" placeholder="Как прошёл день, что радовало, что беспокоило">${esc(e.note||'')}</textarea></section>`;
+  const sick=`<section class="card" data-sec="sick"><div class="row" style="padding:0"><div>${h2('Болезнь')}<div class="s">${prev?.sick&&!e.sick?'вчера отмечал — как сегодня?':'простуда, недомогание, температура'}</div></div><button class="tog" data-sick aria-pressed="${!!e.sick}" aria-label="Болею"></button></div>
     ${e.sick?`<div style="margin-top:14px"><div class="chips">${S.symptoms.map(s=>chip('data-sym',s,e.sym.includes(s))).join('')}</div><div class="row" style="padding-bottom:0"><div class="t">Температура</div><input type="text" inputmode="decimal" id="temp" placeholder="36,6" value="${esc(e.temp??'')}" style="width:96px;text-align:center"></div></div>`:''}</section>`;
   const pw=prevWaist(d);
-  const waist=`<section class="card"><div class="row" style="padding:0"><div>${h2('Обхват живота')}<div class="s">раз в неделю${pw?` · прошлый ${dec(pw.v)} см, ${pd(pw.d).getDate()} ${MON[pd(pw.d).getMonth()]}`:''}</div></div><input type="text" inputmode="decimal" id="waist" placeholder="см" value="${esc(e.waist??'')}" style="width:86px;text-align:center"></div></section>`;
-  const blocks=[weeklyBanner(),hero,...(anyDue?[medsC]:[]),watch,weak,...(sickUp?[sick]:[]),mood,train,...(anyDue?[]:[medsC]),dayType,stool,note,...(sickUp?[]:[sick]),waist];
+  const bpList=e.bp||[];
+  const bpLast=bpList.at(-1);
+  const bpC=(S.bp||bpList.length)?`<section class="card" data-sec="bp"><button class="collapse" data-bpopen aria-expanded="${!!ui.bpOpen}">${h2('Давление')}<span class="sub num">${bpLast?`${bpLast.sys}/${bpLast.dia}${bpList.length>1?' · '+bpList.length+' '+plural(bpList.length,'замер','замера','замеров'):''}`:'внести'} <span class="chev" aria-hidden="true">›</span></span></button>
+    ${ui.bpOpen?`<div style="margin-top:8px">${bpList.map((r,i)=>`<div class="row"><div><div class="t num">${r.sys}/${r.dia}${r.pulse?` <span class="sub">· пульс ${r.pulse}</span>`:''}</div><div class="s">${esc(r.t||'')}${r.src?' · '+esc(r.src):''}</div></div><button class="del" data-delbp="${i}" aria-label="Удалить замер">×</button></div>`).join('')}
+    <div class="bpform"><input type="text" inputmode="numeric" id="bpS" placeholder="верх" aria-label="Верхнее"><span>/</span><input type="text" inputmode="numeric" id="bpD" placeholder="низ" aria-label="Нижнее"><input type="text" inputmode="numeric" id="bpP" placeholder="пульс" aria-label="Пульс"><button class="btn sm" data-bpadd style="width:auto">+</button></div></div>`:''}</section>`:'';
+  const waist=`<section class="card" data-sec="waist"><div class="row" style="padding:0"><div>${h2('Обхват живота')}<div class="s">раз в неделю${pw?` · прошлый ${dec(pw.v)} см, ${pd(pw.d).getDate()} ${MON[pd(pw.d).getMonth()]}`:''}</div></div><input type="text" inputmode="decimal" id="waist" placeholder="см" value="${esc(e.waist??'')}" style="width:86px;text-align:center"></div></section>`;
+  const blocks=[hero,...(anyDue?[medsC]:[]),watch,weak,...(sickUp?[sick]:[]),mood,emoC,train,...(anyDue?[]:[medsC]),dayType,stool,note,...(sickUp?[]:[sick]),waist,...(bpC?[bpC]:[])];
   return blocks.join('')+`<button class="btn" data-save>Сохранить день ${n}</button>`;
 }
 
 function tagsFor(e){const h=e.health||{},t=[];
   if(e.arms!=null||e.legs!=null)t.push(`<span class="tag w num">руки ${e.arms??'—'} · ноги ${e.legs??'—'}</span>`);
   if(e.sick)t.push('<span class="tag" style="color:var(--bad)">болел</span>');
+  if(e.bp?.length)t.push(`<span class="tag num">давление ${e.bp.map(r=>r.sys+'/'+r.dia).join(', ')}</span>`);
+  if(e.emo>=1)t.push(`<span class="tag">эмоции: ${EMO[e.emo]}${e.held?', сдержался':''}</span>`);
   if(h.sl)t.push(`<span class="tag num">сон ${fmtSleep(h.sl)}${h.sq!=null?' · '+h.sq:''}</span>`);
   if(h.w)t.push(`<span class="tag num">${dec(h.w)} кг</span>`);
   if(h.steps)t.push(`<span class="tag num">${nf(h.steps)} шагов</span>`);
@@ -490,8 +597,8 @@ function diary(){
 }
 
 /* ---------- charts ---------- */
-const PERIODS=[['day','День'],['week','Неделя'],['month','Месяц'],['q','3 мес'],['all','Всё']];
-const PDAYS={week:7,month:30,q:91};
+const PERIODS=[['day','День'],['week','Нед.'],['month','Мес.'],['q','3 мес'],['year','Год'],['all','Всё']];
+const PDAYS={week:7,month:30,q:91,year:365};
 function xTicks(x0,x1){const days=(x1-x0)/DAY,r=[];
   if(days>45){const d=new Date(x0);d.setDate(1);d.setMonth(d.getMonth()+1);while(d.getTime()<=x1){r.push({x:d.getTime(),t:MONN[d.getMonth()].slice(0,3).toLowerCase()});d.setMonth(d.getMonth()+1)}return r}
   const step=days>10?7:1;for(let t=x0;t<=x1+1;t+=step*DAY){const d=new Date(t);r.push({x:t,t:days>10?`${d.getDate()}.${String(d.getMonth()+1).padStart(2,'0')}`:WDS[d.getDay()]})}return r}
@@ -533,9 +640,9 @@ function charts(){
   if(ui.period==='day')return head+dayView();
   const {list,from,end}=periodEntries();
   if(!list.length)return head+`<div class="card empty">За этот период записей нет. ${E.size?'Выбери период побольше.':'Загрузи старые записи в разделе «Ещё».'}</div>`;
-  const x0=pd(ui.period==='all'?list[0].date:from).getTime(),x1=pd(end).getTime();
+  const x0=pd(ui.period==='all'||list[0].date>from?list[0].date:from).getTime(),x1=pd(end).getTime();
   const P=(f)=>list.map(e=>({x:pd(e.date).getTime(),y:f(e)})).filter(p=>p.y!=null&&!isNaN(p.y));
-  const long=ui.period==='q'||ui.period==='all';
+  const long=ui.period==='q'||ui.period==='year'||ui.period==='all';
   const smooth=p=>long?p.map((q,i)=>{const a=p.filter(r=>r.x<=q.x&&r.x>q.x-7*DAY);return{x:q.x,y:avg(a.map(r=>r.y))}}):p;
   const out=[];
   const arms=P(e=>e.arms),legs=P(e=>e.legs);
@@ -543,6 +650,11 @@ function charts(){
   out.push(`<section class="card"><div class="ch">${h2('Слабость')}<span class="aside num">${arms.length?`руки в среднем ${dec(avg(arms.map(p=>p.y)).toFixed(1))}`:''}</span></div>
    ${arms.length||legs.length?chart({series:[{pts:smooth(legs),color:'var(--rec)',dash:'4 3',dots:!long},{pts:smooth(arms),color:'var(--weak)',dots:!long}],x0,x1,yMin:0,yMax:10,ticks:[0,5,10],fmt:t=>t,bands,marks}):'<div class="sub">Оценок слабости пока нет. Они появятся после первых записей в приложении.</div>'}
    <div class="legend"><span><i style="background:var(--weak)"></i>руки</span><span><i style="background:var(--rec)"></i>ноги</span><span><i style="background:var(--sleep)"></i>нагрузка на руки</span><span><i style="background:var(--bad);opacity:.35"></i>болел</span></div></section>`);
+  const em=list.filter(e=>e.emo!=null);
+  if(em.length){const cnt=[0,1,2,3].map(i=>em.filter(e=>e.emo===i).length),held=list.filter(e=>e.held).length,mx=Math.max(...cnt,1);
+    out.push(`<section class="card" data-sec="emo"><div class="ch">${h2('Эмоции')}<span class="aside num">отмечено дней: ${em.length}</span></div><div class="bars">${EMO.map((l,i)=>`<div class="bar"><span>${l}</span><div class="track"><div class="fill e${i}" style="width:${cnt[i]/mx*100}%"></div></div><b class="num">${cnt[i]}</b></div>`).join('')}</div><div class="sub" style="margin-top:8px">Сдержался: <b class="num" style="color:var(--ink)">${held}</b> ${plural(held,'раз','раза','раз')}</div></section>`)}
+  const bs=list.filter(e=>e.bp?.length).map(e=>({x:pd(e.date).getTime(),s:avg(e.bp.map(r=>r.sys)),d:avg(e.bp.map(r=>r.dia))}));
+  if(bs.length)out.push(`<section class="card" data-sec="bp"><div class="ch">${h2('Давление')}<span class="aside num">последнее ${Math.round(bs.at(-1).s)}/${Math.round(bs.at(-1).d)}</span></div>${chart({series:[{pts:bs.map(p=>({x:p.x,y:p.s})),color:'var(--bad)',dots:true},{pts:bs.map(p=>({x:p.x,y:p.d})),color:'var(--rec)',dots:true}],x0,x1,yMin:50,yMax:170,ticks:[60,90,120,150],fmt:t=>t})}<div class="legend"><span><i style="background:var(--bad)"></i>верхнее</span><span><i style="background:var(--rec)"></i>нижнее</span></div></section>`);
   const sl=P(e=>e.health?.sl);
   if(sl.length)out.push(`<section class="card"><div class="ch">${h2('Сон')}<span class="aside num">в среднем ${fmtSleep(avg(sl.map(p=>p.y)))}</span></div>
    ${chart({series:[{pts:smooth(sl),color:'var(--sleep)',area:true,dots:!long}],x0,x1,...niceRange(sl.map(p=>p.y),2,.2),fmt:t=>t+' ч'})}
@@ -577,9 +689,9 @@ function links(){
   const cards=[];
   const bar=(l,v,c)=>`<div class="bar"><span>${l}</span><div class="track"><div class="fill ${c?'c':''}" style="width:${Math.min(v,10)*10}%"></div></div><b class="num">${dec(v.toFixed(1))}</b></div>`;
   function lagStats(test,k){const r=[];for(const lag of[0,1,2]){const yes=[],no=[];for(const e of E.values()){const t=at(addDays(e.date,lag));const v=val(t,k);if(v==null)continue;(test(e)?yes:no).push(v)}r.push({lag,yes:avg(yes),ny:yes.length,no:avg(no),nn:no.length})}return r}
-  const causes=[...new Set([...E.values()].flatMap(e=>e.causes||[]))].filter(c=>c!=='Не знаю');
+  const causes=[...new Set([...E.values()].flatMap(causesOf))].filter(c=>c!=='Не знаю');
   for(const c of causes){for(const[k,limb]of[['arms','рук'],['legs','ног']]){
-    const st=lagStats(e=>(e.causes||[]).includes(c),k);const best=st.filter(s=>s.ny>=3&&s.nn>=3).sort((a,b)=>(b.yes-b.no)-(a.yes-a.no))[0];
+    const st=lagStats(e=>causesOf(e).includes(c),k);const best=st.filter(s=>s.ny>=3&&s.nn>=3).sort((a,b)=>(b.yes-b.no)-(a.yes-a.no))[0];
     if(!best||best.yes-best.no<0.7)continue;
     const when=['в тот же день','на следующий день','через 2 дня'][best.lag];
     cards.push({score:best.yes-best.no,html:`<section class="card ins"><div class="lbl" style="margin-bottom:6px">${esc(c)}</div><div class="big">После «${esc(c.toLowerCase())}» слабость ${limb} ${when} выше</div>
@@ -614,7 +726,9 @@ function more(){
     ${it('Препараты',S.meds.filter(x=>x.active).map(x=>`${x.n.split(' (')[0]} ${x.time||''}`).join(', ')||'список пуст','data-manage="meds"')}
     ${it('Упражнения',S.exercises.filter(x=>x.active).map(x=>x.n).join(', '),'data-manage="ex"')}
     ${it('Причины слабости',S.causes.length+' вариантов','data-manage="causes"')}
-    ${it('Даты и цели',`начало ${pd(S.start).toLocaleDateString('ru-RU')} · сон ${fmtHM(S.goals.sleep)} · ${nf(S.goals.steps)} шагов`,'data-manage="dates"')}
+    ${it('Какой был день',S.dayTypes.length+' вариантов','data-manage="days"')}
+    ${it('Давление',S.bp?'Блок включён':'Блок выключен','data-manage="bp"')}
+    ${it('Цели',`сон ${fmtHM(S.goals.sleep)} · ${nf(S.goals.steps)} шагов · вес ${dec(S.goals.weight)} кг`,'data-manage="dates"')}
     ${it('Команда «Записать день»','Как подтянуть данные из «Здоровья»','data-manage="shortcut"')}</section>
   <section class="card"><div class="ch">${h2('Защита')}</div>
     ${it('Вход по PIN-коду',S.pin?'Включён':'Выключен','data-manage="pin"')}
@@ -624,18 +738,22 @@ function more(){
 }
 function manage(m){
   const back=`<button class="backbtn" data-manage="">‹ Ещё</button>`;
-  if(m==='meds')return back+`<div class="h1">Препараты</div><section class="card">${S.meds.map(x=>`<div class="medit"><div class="row" style="padding-bottom:4px"><input type="text" class="hin" data-medf="n" data-id="${x.id}" value="${esc(x.n)}" aria-label="Название" style="font-size:16px"><button class="tog" data-medact="${x.id}" aria-pressed="${x.active}" aria-label="Принимаю сейчас"></button></div>
-      <div class="form" style="margin-top:0"><input type="text" data-medf="dose" data-id="${x.id}" value="${esc(x.dose||'')}" placeholder="Доза" aria-label="Доза"><input type="time" data-medf="time" data-id="${x.id}" value="${esc(x.time||'')}" aria-label="Время"></div>${x.active?'':'<div class="sub">в архиве</div>'}</div>`).join('')}
+  if(m==='meds')return back+`<div class="h1">Препараты</div><section class="card">${S.meds.map(x=>`<div class="medit"><div class="row" style="padding-bottom:4px"><input type="text" class="hin" data-medf="n" data-id="${x.id}" value="${esc(x.n)}" aria-label="Название" style="font-size:16px"></div>
+      <div class="form" style="margin-top:0"><input type="text" data-medf="dose" data-id="${x.id}" value="${esc(x.dose||'')}" placeholder="Доза" aria-label="Доза"><input type="time" data-medf="time" data-id="${x.id}" value="${esc(x.time||'')}" aria-label="Время"></div><div class="medact">${x.active?`<button class="mbtn ghost" data-medact="${x.id}">Убрать из приёма</button>`:`<span class="sub">не принимаю · история сохранена</span><button class="mbtn ghost" data-medact="${x.id}">Вернуть</button>`}${ui.delMed===x.id?`<button class="mbtn danger" data-meddel="${x.id}">Точно удалить</button><button class="mbtn ghost" data-delcancel>Отмена</button>`:`<button class="linkbtn danger" data-meddelask="${x.id}">Удалить</button>`}</div></div>`).join('')}
     <div class="lbl" style="margin:14px 0 6px">Новый препарат</div>
     <div class="form"><input type="text" class="full" id="medName" placeholder="Название"><input type="text" id="medDose" placeholder="Доза"><input type="time" id="medTime" value="08:00" aria-label="Время"><button class="btn sm full" data-medsave>Добавить</button></div>
-    <div class="sub" style="margin-top:8px">Изменения сохраняются сразу. Новая доза действует с сегодняшнего дня, в прошлых днях остаётся та, что была. Выключенный препарат уходит в архив, история сохраняется.</div></section>`;
-  if(m==='ex')return back+`<div class="h1">Упражнения</div><section class="card">${S.exercises.map(x=>`<div class="row"><div><div class="t">${esc(x.n)}</div><div class="s">${x.u==='s'?'секунды':'раз'}${x.kg!=null?' · '+dec(x.kg)+' кг':''}${x.active?'':' · скрыто'}</div></div><button class="tog" data-exact="${x.id}" aria-pressed="${x.active}" aria-label="Показывать"></button></div>`).join('')}
+    <div class="sub" style="margin-top:8px">Изменения сохраняются сразу. Новая доза и время действуют с сегодняшнего дня, в прошлых днях остаётся как было. «Убрать из приёма» скрывает препарат из дня, история остаётся. «Удалить» убирает его совсем.</div></section>`;
+  if(m==='ex')return back+`<div class="h1">Упражнения</div><section class="card">${S.exercises.filter(x=>!x.deleted).map(x=>`<div class="row"><div><div class="t">${esc(x.n)}</div><div class="s">${x.u==='s'?'секунды':'раз'}${x.kg!=null?' · '+dec(x.kg)+' кг':''}${x.active?'':' · скрыто'}</div></div><div class="medact" style="margin:0;flex:none">${ui.delEx===x.id?`<button class="mbtn danger" data-exdel="${x.id}">Точно удалить</button><button class="mbtn ghost" data-delcancel>Отмена</button>`:`<button class="linkbtn danger" data-exdelask="${x.id}">Удалить</button><button class="tog" data-exact="${x.id}" aria-pressed="${x.active}" aria-label="Показывать"></button>`}</div></div>`).join('')}
     <div class="form"><input type="text" class="full" id="exName" placeholder="Новое упражнение"><div class="seg full">${['раз','секунды'].map(u=>`<button data-exu="${u}" aria-pressed="${ui.exU===u}">${u}</button>`).join('')}</div><input type="text" class="full" inputmode="decimal" id="exKg" placeholder="Вес, кг (если есть)"><button class="btn sm full" data-exsave>Добавить</button></div></section>`;
+  if(m==='days')return back+`<div class="h1">Какой был день</div><section class="card">${S.dayTypes.map((c,i)=>`<div class="row"><div class="t">${esc(c)}</div><button class="del" data-deldt="${i}" aria-label="Убрать">×</button></div>`).join('')}
+    <div class="inline"><input type="text" id="dtIn" placeholder="Например: Спортзал"><button class="btn sm" data-dtsave style="width:auto">Добавить</button></div><div class="sub" style="margin-top:8px">Удаление убирает вариант из списка, старые записи не меняются.</div></section>`;
+  if(m==='bp')return back+`<div class="h1">Давление</div><section class="card"><div class="row" style="padding-top:0"><div><div class="t">Показывать блок «Давление»</div><div class="s">на экране «Сегодня», под Apple Watch</div></div><button class="tog" data-bptog aria-pressed="${!!S.bp}" aria-label="Показывать"></button></div>
+    <div class="sub">Замеры можно вписывать вручную или подтягивать из «Здоровья», если тонометр пишет туда. В Команде это типы «Давление систолическое» и «диастолическое».</div></section>`;
   if(m==='causes')return back+`<div class="h1">Причины слабости</div><section class="card">${S.causes.map((c,i)=>`<div class="row"><div class="t">${esc(c)}</div><button class="del" data-delcause="${i}" aria-label="Убрать">×</button></div>`).join('')}
     <div class="inline"><input type="text" id="causeIn" placeholder="Своя причина"><button class="btn sm" data-causesave style="width:auto">Добавить</button></div><div class="sub" style="margin-top:8px">Удаление убирает вариант из списка, старые записи не меняются.</div></section>`;
-  if(m==='dates'){const f=(id,l,v,mode='text')=>`<label class="row"><div class="t">${l}</div><input type="${mode}" id="${id}" value="${esc(v)}" style="width:160px;text-align:right"></label>`;
-    return back+`<div class="h1">Даты и цели</div><section class="card">${f('setStart','День 1',S.start,'date')}${f('setAlc','Без алкоголя с',S.sober.alc,'date')}${f('setSmoke','Без сигарет с',S.sober.smoke,'date')}</section>
-    <section class="card">${f('setSleep','Цель сна, ч:мин',fmtHM(S.goals.sleep))}${f('setSteps','Цель шагов',S.goals.steps)}${f('setExmin','Упражнения, мин',S.goals.exmin)}</section><button class="btn" data-savedates>Сохранить</button>`}
+  if(m==='dates'){const f=(id,l,v,mode='text')=>`<label class="row"><div class="t">${l}</div><input type="${mode}" id="${id}" value="${esc(v)}" inputmode="decimal" style="width:120px;text-align:right"></label>`;
+    return back+`<div class="h1">Цели</div><section class="card"><div class="row"><div><div class="t">День 1</div><div class="s">9 июня 2026, начало восстановления</div></div></div><div class="row"><div><div class="t">Без алкоголя</div><div class="s">с 28 декабря 2025</div></div></div><div class="row"><div><div class="t">Без сигарет</div><div class="s">с 30 января 2026</div></div></div></section>
+    <section class="card">${f('setSleep','Сон, ч:мин',fmtHM(S.goals.sleep))}${f('setSteps','Шаги',S.goals.steps)}${f('setExmin','Упражнения, мин',S.goals.exmin)}${f('setWeight','Вес, кг',dec(S.goals.weight))}</section><button class="btn" data-savedates>Сохранить</button>`}
   if(m==='pin')return back+`<div class="h1">PIN-код</div><section class="card"><div class="sub" style="margin-bottom:10px">PIN спрашивается при каждом открытии приложения. Если забудешь его, данные не пропадут, но войти можно будет только после сброса приложения, поэтому держи свежую копию.</div>
     ${S.pin?`<button class="btn sm ghost" data-pinoff>Выключить PIN</button>`:`<div class="inline"><input type="password" inputmode="numeric" id="pinIn" placeholder="4 цифры" maxlength="4"><button class="btn sm" data-pinset style="width:auto">Включить</button></div>`}</section>`;
   if(m==='shortcut')return back+`<div class="h1">Команда «Записать день»</div><section class="card"><p class="sub" style="margin-top:0">Команда для приложения «Команды» на iPhone берёт данные из «Здоровья» и открывает дневник с уже заполненными полями. Её мы соберём следующим шагом.</p>
@@ -652,6 +770,7 @@ function entryMD(e){const d=pd(e.date),h=e.health||{},L=[];
   const w=[];if(e.arms!=null)w.push(`руки ${e.arms}/10`);if(e.legs!=null)w.push(`ноги ${e.legs}/10`);
   if(w.length||e.causes?.length)L.push(`Слабость: ${w.join(', ')||'—'}${e.causes?.length?` · Повлияло: ${e.causes.map(c=>c==='Руль'&&e.drive?`руль ${e.drive} ч`:c.toLowerCase()).join(', ')}`:''}`);
   if(e.mood)L.push(`Самочувствие: ${MOODS[e.mood-1][0]}`);
+  if(e.emo!=null)L.push(`Эмоции: ${EMO[e.emo]}${e.emoWhy?.length?' ('+e.emoWhy.join(', ').toLowerCase()+')':''}${e.held?' · сдержался':''}`);
   const m=[];if(h.sl)m.push(`Сон ${fmtSleep(h.sl)}${h.sq!=null?' · '+h.sq+'%':''}${h.slNote?' ('+h.slNote+')':''}`);if(h.w)m.push(`Вес ${dec(h.w)} кг`);if(h.steps)m.push(`Шаги ${nf(h.steps)}${h.km?' · '+dec(h.km)+' км':''}`);
   if(h.rhr)m.push(`Пульс покоя ${h.rhr}`);if(h.hrv)m.push(`ВСР ${h.hrv} мс`);if(h.wtemp!=null)m.push(`t° запястья ${h.wtemp>0?'+':''}${dec(h.wtemp)}`);if(h.resp)m.push(`Дыхание ${dec(h.resp)}`);if(h.exmin)m.push(`Упражнения ${h.exmin} мин`);
   if(m.length)L.push(m.join('  ·  '));
@@ -662,13 +781,14 @@ function entryMD(e){const d=pd(e.date),h=e.health||{},L=[];
   if(md.length||e.medsNote)L.push(`Препараты: ${md.join(', ')||e.medsNote}`);
   const o=[];if(e.stool)o.push(`Стул ${e.stool}${e.stoolNote&&e.stoolNote!==e.stool?' ('+e.stoolNote+')':''}`);if(e.dayType?.length)o.push(`День: ${e.dayType.join(', ').toLowerCase()}`);if(e.waist)o.push(`Живот ${dec(e.waist)} см`);
   if(o.length)L.push(o.join('  ·  '));
+  if(e.bp?.length)L.push('Давление: '+e.bp.map(r=>`${r.sys}/${r.dia}${r.pulse?' п'+r.pulse:''}${r.t?' ('+r.t+')':''}`).join(', '));
   if(e.sick)L.push(`Болезнь: ${[...(e.sym||[])].join(', ').toLowerCase()||'да'}${e.temp?', t '+e.temp:''}`);
   return L.join('\n');
 }
 function buildMD(l){let out=`# Дневник восстановления\n\nВыгрузка ${new Date().toLocaleDateString('ru-RU')} · записей: ${l.length}\n`;let cm='';for(const e of l){const k=e.date.slice(0,7);if(k!==cm){cm=k;out+=`\n## ${MONN[+k.slice(5)-1]} ${k.slice(0,4)}\n`}out+='\n'+entryMD(e)+'\n'}return out}
-function buildCSV(l){const exIds=S.exercises.map(x=>x.id);const cols=['date','day','arms','legs','causes','drive_h','mood','sleep_h','sleep_score','steps','km','weight','rhr','hrv','wrist_temp','resp','kcal','ex_min','charge',...exIds.map(i=>'ex_'+i),...exIds.filter(i=>exById(i).kg!=null).map(i=>'kg_'+i),'workouts','meds','sick','symptoms','temp','stool','day_type','waist','note'];
+function buildCSV(l){const exIds=S.exercises.map(x=>x.id);const cols=['date','day','arms','legs','causes','drive_h','mood','emo','emo_why','held','bp','sleep_h','sleep_score','steps','km','weight','rhr','hrv','wrist_temp','resp','kcal','ex_min','charge',...exIds.map(i=>'ex_'+i),...exIds.filter(i=>exById(i).kg!=null).map(i=>'kg_'+i),'workouts','meds','sick','symptoms','temp','stool','day_type','waist','note'];
   const q=v=>{if(v==null)return '';const s=String(v);return /[;"\n]/.test(s)?`"${s.replace(/"/g,'""')}"`:s};
-  const rows=l.map(e=>{const h=e.health||{};return[e.date,dayN(e.date),e.arms,e.legs,(e.causes||[]).join(', '),e.drive,e.mood,h.sl!=null?+h.sl.toFixed(2):'',h.sq,h.steps,h.km,h.w,h.rhr,h.hrv,h.wtemp,h.resp,h.kcal,h.exmin,e.charge,...exIds.map(i=>e.ex?.[i]?.v),...exIds.filter(i=>exById(i).kg!=null).map(i=>e.ex?.[i]?.kg),(e.workouts||[]).map(w=>[w.t,w.dist,w.time].filter(Boolean).join(' ')).join('; '),S.meds.map(x=>medLine(e,x)).filter(Boolean).join(', ')||e.medsNote,e.sick?1:'',(e.sym||[]).join(', '),e.temp,e.stool,(e.dayType||[]).join(', '),e.waist,e.note].map(v=>q(typeof v==='number'?dec(v):v)).join(';')});
+  const rows=l.map(e=>{const h=e.health||{};return[e.date,dayN(e.date),e.arms,e.legs,(e.causes||[]).join(', '),e.drive,e.mood,e.emo!=null?EMO[e.emo]:'',(e.emoWhy||[]).join(', '),e.held?1:'',(e.bp||[]).map(r=>r.sys+'/'+r.dia).join(', '),h.sl!=null?+h.sl.toFixed(2):'',h.sq,h.steps,h.km,h.w,h.rhr,h.hrv,h.wtemp,h.resp,h.kcal,h.exmin,e.charge,...exIds.map(i=>e.ex?.[i]?.v),...exIds.filter(i=>exById(i).kg!=null).map(i=>e.ex?.[i]?.kg),(e.workouts||[]).map(w=>[w.t,w.dist,w.time].filter(Boolean).join(' ')).join('; '),S.meds.map(x=>medLine(e,x)).filter(Boolean).join(', ')||e.medsNote,e.sick?1:'',(e.sym||[]).join(', '),e.temp,e.stool,(e.dayType||[]).join(', '),e.waist,e.note].map(v=>q(typeof v==='number'?dec(v):v)).join(';')});
   return '﻿'+cols.join(';')+'\n'+rows.join('\n')}
 async function shareFile(name,text,type){
   const file=new File([text],name,{type});
@@ -684,15 +804,23 @@ async function doExport(kind){
   else ok=await shareFile(`Дневник копия ${stamp}.json`,JSON.stringify({app:'dnevnik',version:1,kind:'backup',exported:new Date().toISOString(),settings:S,entries:l},null,1),'application/json');
   if(ok){S.lastExport=Date.now();await saveSettings();render()}
 }
+/* Дополняет уже существующий день только пустыми полями из файла. Ничего не перезаписывает. */
+function fillGaps(cur,inc){let ch=false;
+  if(!cur.note&&inc.note){cur.note=inc.note;ch=true}
+  for(const k in inc.health)if(cur.health[k]==null&&inc.health[k]!=null){cur.health[k]=inc.health[k];ch=true}
+  for(const k in inc.ex)if(!cur.ex[k]&&inc.ex[k]){cur.ex[k]=inc.ex[k];ch=true}
+  if(!cur.workouts.length&&inc.workouts.length){cur.workouts=inc.workouts;ch=true}
+  for(const k of ['stool','stoolNote','waist','medsNote','medsOk'])if((cur[k]==null||cur[k]==='')&&inc[k]!=null&&inc[k]!==''){cur[k]=inc[k];ch=true}
+  return ch}
 async function doImport(file){
   try{const txt=await file.text();
     if(!txt.trim().startsWith('{')){let days=new Set();for(const line of txt.split(/\r?\n/)){const q=line.slice(line.indexOf('?')+1).trim();if(!/(^|&)d=\d{4}-\d\d-\d\d/.test(q))continue;const p=new URLSearchParams(q);if(applyParams(p,false,true))days.add(p.get('d'))}
       if(!days.size)throw new Error('В файле нет данных из «Здоровья»');toast(`Данные из «Здоровья» добавлены за ${days.size} ${plural(days.size,'день','дня','дней')}`);render();return}
     const data=JSON.parse(txt);if(data.app!=='dnevnik'||!Array.isArray(data.entries))throw new Error('Это не файл дневника');
     const wasEmpty=![...E.values()].some(hasContent);
-    let add=0,skip=0;for(const e of data.entries){if(!e.date||!/^\d{4}-\d\d-\d\d$/.test(e.date))continue;if(hasContent(E.get(e.date))){skip++;continue}const n=norm(e);E.set(n.date,n);await DB.put(n);add++}
+    let add=0,skip=0,fill=0;for(const e of data.entries){if(!e.date||!/^\d{4}-\d\d-\d\d$/.test(e.date))continue;const cur=E.get(e.date);if(hasContent(cur)){if(fillGaps(norm(cur),norm(structuredClone(e)))){await DB.put(cur);fill++}else skip++;continue}const n=norm(e);E.set(n.date,n);await DB.put(n);add++}
     if(data.kind==='backup'&&wasEmpty&&data.settings&&Array.isArray(data.settings.exercises)){S={...structuredClone(DEFAULTS),...data.settings};await saveSettings();applyAccent()}
-    toast(`Загружено ${add} ${plural(add,'запись','записи','записей')}${skip?`, пропущено ${skip}: эти дни уже есть`:''}`);render();
+    toast(`Загружено ${add} ${plural(add,'запись','записи','записей')}${fill?`, дополнено ${fill}`:''}${skip?`, пропущено ${skip}: эти дни уже есть`:''}`);render();
   }catch(err){toast('Не получилось загрузить: '+err.message)}
 }
 
@@ -711,8 +839,9 @@ function applyParams(p,fromUrl,silent){
   const man=h.manual||{};const set=(k,v)=>{if(v!=null&&!isNaN(v)&&!man[k]){h[k]=v;n++}};
   {let v=parseSleep(p.get('sl'));if(v!=null){if(v>1440)v=v/3600;else if(v>24)v=v/60;set('sl',Math.round(v*1000)/1000)}}for(const k of['sq','deep','rem','core','awake','rhr','hrv','kcal','exmin','stand','steps'])set(k,p.has(k)?Math.round(parseNum(p.get(k))):null);
   for(const k of['km','w','resp','wtemp'])set(k,p.has(k)?Math.round(parseNum(p.get(k))*100)/100:null);
+  {const sy=parseNum(p.get('bps')),di=parseNum(p.get('bpd'));if(sy&&di){e.bp=(e.bp||[]).filter(r=>r.src!=='Здоровье');e.bp.push({sys:Math.round(sy),dia:Math.round(di),t:'',src:'Здоровье'});n++}}
   if(p.get('bed'))h.bed=p.get('bed');if(p.get('wake'))h.wake=p.get('wake');
-  if(p.get('wk')){e.workouts=e.workouts.filter(w=>w.src!=='Здоровье');for(const s of p.get('wk').split(';')){const[type,dist,time]=s.split('|');if(!type)continue;const k=WK[type]?type:'other';e.workouts.push({type:k,t:WK[k][0],dist:dist||'',time:time||'',src:'Здоровье'})}n++}
+  if(p.get('wk')){e.workouts=e.workouts.filter(w=>w.src!=='Здоровье');for(const s of p.get('wk').split(';')){const[type,dist,time]=s.split('|');if(!type)continue;const k=wkType(type);e.workouts.push({type:k,t:k==='other'?type.trim():WK[k][0],dist:dist||'',time:time||'',src:'Здоровье'})}n++}
   if(n){h.src='Команда · '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});saveEntry(e);if(!silent){ui.date=date;setTimeout(()=>toast('Данные из «Здоровья» добавлены'),300)}}
   return n;
 }
@@ -747,11 +876,12 @@ function onInput(ev){
   else if(t.dataset.runm!=null){e.workouts[+t.dataset.runm].runM=parseNum(t.value);saveEntry(e)}
 }
 async function onClick(ev){
-  const t=ev.target.closest('button');if(!t)return;const ds=t.dataset;
-  if(ds.tab){ui.tab=ds.tab;ui.manage=null;render();window.scrollTo(0,0);return}
+  const t=ev.target.closest('button');const ds=t?.dataset||{};
+  if((ui.delMed||ui.delEx)&&!ds.meddel&&!ds.exdel){ui.delMed=null;ui.delEx=null;rr();if(!t||'delcancel' in ds||ds.meddelask||ds.exdelask)return}
+  if(!t)return;
+  if(ds.tab){ui.tab=ds.tab;ui.manage=ds.goto||null;render();window.scrollTo(0,0);return}
   const e=cur();
   if(ds.nav){const nd=addDays(ui.date,+ds.nav);if(nd<=todayISO()){ui.date=nd;render()}return}
-  if('badge' in ds){ui.badge++;return rr()}
   if(ds.accent){S.accent=ds.accent;applyAccent();await saveSettings();return rr()}
   if('watch' in ds){ui.watchOpen=!ui.watchOpen;if(!ui.watchOpen)ui.editHealth=false;return rr()}
   if(ds.runsc){const name=ds.runsc==='sleep'?'Записать сон':'Записать день';ui.awaitPaste=true;rr();location.href=`shortcuts://run-shortcut?name=${encodeURIComponent(name)}&input=text&text=${ui.date}`;return}
@@ -762,8 +892,19 @@ async function onClick(ev){
   if(ds.cause){const c=ds.cause;e.causes=e.causes.includes(c)?e.causes.filter(x=>x!==c):[...e.causes,c];if(c==='Руль'&&e.drive==null)e.drive=1;saveEntry(e);return rr()}
   if('addcause' in ds){ui.addCause=true;rr();$('causeIn')?.focus();return}
   if('causesave' in ds){const v=$('causeIn').value.trim();if(v){if(!S.causes.includes(v)){S.causes.push(v);await saveSettings()}if(ui.tab==='today'&&!e.causes.includes(v)){e.causes.push(v);saveEntry(e)}}ui.addCause=false;return rr()}
+  if('bpopen' in ds){ui.bpOpen=!ui.bpOpen;return rr()}
+  if('bpadd' in ds){const sy=parseNum($('bpS').value),di=parseNum($('bpD').value),pu=parseNum($('bpP').value);if(!sy||!di)return toast('Впиши верхнее и нижнее');e.bp=[...(e.bp||[]),{sys:Math.round(sy),dia:Math.round(di),...(pu?{pulse:Math.round(pu)}:{}),t:ui.date===todayISO()?nowHM():''}];saveEntry(e);return rr()}
+  if(ds.delbp!=null){e.bp.splice(+ds.delbp,1);saveEntry(e);return rr()}
+  if(ds.deldt!=null){S.dayTypes.splice(+ds.deldt,1);await saveSettings();return rr()}
+  if('dtsave' in ds){const v=$('dtIn').value.trim();if(v&&!S.dayTypes.includes(v)){S.dayTypes.push(v);await saveSettings()}return rr()}
+  if('bptog' in ds){S.bp=!S.bp;await saveSettings();return rr()}
   if(ds.delcause!=null){S.causes.splice(+ds.delcause,1);await saveSettings();return rr()}
   if(ds.drive){e.drive=Math.max(0,Math.min(16,(e.drive||0)+ +ds.drive));saveEntry(e);return rr()}
+  if(ds.emo){const v=+ds.emo;e.emo=e.emo===v?null:v;if(e.emo==null||e.emo===0){e.emoWhy=[];e.held=false}saveEntry(e);return rr()}
+  if(ds.emowhy){const c=ds.emowhy;e.emoWhy=(e.emoWhy||[]).includes(c)?e.emoWhy.filter(x=>x!==c):[...(e.emoWhy||[]),c];saveEntry(e);return rr()}
+  if('addemo' in ds){ui.addEmo=true;rr();$('emoIn')?.focus();return}
+  if('emosave' in ds){const v=$('emoIn').value.trim();if(v){if(!S.emoWhy.includes(v)){S.emoWhy.push(v);await saveSettings()}e.emoWhy=[...new Set([...(e.emoWhy||[]),v])];saveEntry(e)}ui.addEmo=false;return rr()}
+  if('held' in ds){e.held=!e.held;saveEntry(e);return rr()}
   if(ds.mood){const v=+ds.mood;e.mood=e.mood===v?null:v;saveEntry(e);return rr()}
   if(ds.charge){e.charge=e.charge===ds.charge?null:ds.charge;saveEntry(e);return rr()}
   if(ds.ex){const x=exById(ds.ex);const c=e.ex[x.id]||{};const kg=c.kg??x.kg;const {last}=exHistory(x.id,ui.date,kg);let v=c.v||0;
@@ -774,17 +915,22 @@ async function onClick(ev){
   if('addex' in ds){ui.addEx=true;return rr()}
   if(ds.exu){ui.exU=ds.exu;return rr()}
   if('exsave' in ds){const nm=$('exName').value.trim();const kg=parseNum($('exKg').value);if(nm){S.exercises.push({id:'x'+uid(),n:nm,u:ui.exU==='секунды'?'s':'n',step:ui.exU==='секунды'?5:1,...(kg!=null?{kg}:{}),active:true});await saveSettings()}ui.addEx=false;return rr()}
+  if(ds.exdelask){ui.delEx=ds.exdelask;return rr()}
+  if(ds.exdel){const x=exById(ds.exdel);x.deleted=true;x.active=false;ui.delEx=null;await saveSettings();toast('Упражнение удалено, история сохранена');return rr()}
+  if(ds.meddelask){ui.delMed=ds.meddelask;return rr()}
   if(ds.exact){const x=exById(ds.exact);x.active=!x.active;await saveSettings();return rr()}
   if(ds.run!=null){const w=e.workouts[+ds.run];w.run=!w.run;saveEntry(e);return rr()}
   if(ds.delwk!=null){e.workouts.splice(+ds.delwk,1);saveEntry(e);return rr()}
   if('addwk' in ds){ui.addWk=true;return rr()}
   if(ds.wkt){ui.wkT=ds.wkt;return rr()}
   if('wksave' in ds){const k=ui.wkT;e.workouts.push({type:k,t:WK[k][0],dist:$('wkDist').value.trim(),time:$('wkTime').value.trim(),src:'вручную'});ui.addWk=false;saveEntry(e);return rr()}
-  if(ds.medtake){const m=S.meds.find(x=>x.id===ds.medtake);e.meds[m.id]={st:'taken',at:ui.date===todayISO()?nowHM():(m.time||''),dose:m.dose||'',plan:m.time||''};saveEntry(e);toast(`${m.n.split(' (')[0]}: принято`);return rr()}
-  if(ds.medskip){const m=S.meds.find(x=>x.id===ds.medskip);e.meds[m.id]={st:'skipped',dose:m.dose||'',plan:m.time||''};saveEntry(e);return rr()}
+  if(ds.medtake){const m=S.meds.find(x=>x.id===ds.medtake);e.meds[m.id]={n:m.n,st:'taken',at:ui.date===todayISO()?nowHM():(m.time||''),dose:m.dose||'',plan:m.time||''};saveEntry(e);toast(`${m.n.split(' (')[0]}: принято`);return rr()}
+  if(ds.medskip){const m=S.meds.find(x=>x.id===ds.medskip);e.meds[m.id]={n:m.n,st:'skipped',dose:m.dose||'',plan:m.time||''};saveEntry(e);return rr()}
   if(ds.medundo){delete e.meds[ds.medundo];saveEntry(e);return rr()}
   if('addmed' in ds){ui.addMed=true;return rr()}
   if('medsave' in ds){const n=$('medName').value.trim();if(n){S.meds.push({id:'m'+uid(),n,dose:$('medDose').value.trim(),time:$('medTime').value||'08:00',active:true});await saveSettings()}ui.addMed=false;return rr()}
+  if(ds.meddelask){ui.delMed=ds.meddelask;return rr()}
+  if(ds.meddel){S.meds=S.meds.filter(x=>x.id!==ds.meddel);ui.delMed=null;await saveSettings();toast('Препарат удалён');return rr()}
   if(ds.medact){const m=S.meds.find(x=>x.id===ds.medact);m.active=!m.active;await saveSettings();return rr()}
   if('sick' in ds){e.sick=!e.sick;saveEntry(e);return rr()}
   if(ds.sym){const s=ds.sym;e.sym=e.sym.includes(s)?e.sym.filter(x=>x!==s):[...e.sym,s];saveEntry(e);return rr()}
@@ -799,8 +945,7 @@ async function onClick(ev){
   if(ds.exportp){ui.exportP=ds.exportp;return rr()}
   if(ds.export){return doExport(ds.export)}
   if(ds.manage!=null){ui.manage=ds.manage||null;render();window.scrollTo(0,0);return}
-  if('savedates' in ds){const v=id=>$(id).value;if(/^\d{4}-\d\d-\d\d$/.test(v('setStart')))S.start=v('setStart');if(v('setAlc'))S.sober.alc=v('setAlc');if(v('setSmoke'))S.sober.smoke=v('setSmoke');
-    S.goals.sleep=parseSleep(v('setSleep'))||S.goals.sleep;S.goals.steps=parseNum(v('setSteps'))||S.goals.steps;S.goals.exmin=parseNum(v('setExmin'))||S.goals.exmin;await saveSettings();toast('Сохранено');ui.manage=null;return render()}
+  if('savedates' in ds){const v=id=>$(id).value;S.goals.sleep=parseSleep(v('setSleep'))||S.goals.sleep;S.goals.steps=parseNum(v('setSteps'))||S.goals.steps;S.goals.exmin=parseNum(v('setExmin'))||S.goals.exmin;S.goals.weight=parseNum(v('setWeight'))||S.goals.weight;await saveSettings();toast('Сохранено');ui.manage=null;return render()}
   if('pinset' in ds){const v=$('pinIn').value;if(!/^\d{4}$/.test(v))return toast('Нужно 4 цифры');S.pin=await hash(v);await saveSettings();toast('PIN включён');return rr()}
   if('pinoff' in ds){S.pin=null;await saveSettings();toast('PIN выключен');return rr()}
   if(ds.wipe){if(ds.wipe==='ask'){ui.confirmWipe=true;return rr()}if(ds.wipe==='no'){ui.confirmWipe=false;return rr()}
@@ -811,19 +956,24 @@ async function start(){
   $('tabs').innerHTML=TABS.map(([k,l])=>`<button class="tab" role="tab" data-tab="${k}"><svg viewBox="0 0 24 24">${ICONS[k]}</svg>${l}</button>`).join('');
   try{await DB.open();const s=await DB.get('settings');if(s)S={...structuredClone(DEFAULTS),...s,goals:{...DEFAULTS.goals,...(s.goals||{})},sober:{...DEFAULTS.sober,...(s.sober||{})}};for(const e of await DB.all())E.set(e.date,norm(e))}
   catch(err){$('screen').innerHTML=`<div class="card empty">Хранилище недоступно: ${esc(err.message)}. Открой приложение с экрана «Домой», не в режиме частного доступа.</div>`;return}
+  S.start=DEFAULTS.start;S.sober={...DEFAULTS.sober};S.goals={...DEFAULTS.goals,...S.goals};
   if((S.migr||0)<1){if(!S.causes.includes('Бег')){const i=S.causes.indexOf('Долгая ходьба');S.causes.splice(i>=0?i+1:S.causes.length,0,'Бег')}S.migr=1;await saveSettings()}
   if((S.migr||0)<2){for(const m of S.meds){if(!m.time)m.time=/вечер/i.test(m.d||'')?'21:00':/обед|день/i.test(m.d||'')?'13:00':'08:00';if(m.dose==null)m.dose=(m.d||'').split('·')[0].trim();delete m.d}
     for(const e of E.values()){let ch=false;for(const k of Object.keys(e.meds||{})){if(e.meds[k]===true){const mm=S.meds.find(x=>x.id===k);e.meds[k]={st:'taken',dose:mm?.dose||'',plan:mm?.time||''};ch=true}else if(e.meds[k]===false){delete e.meds[k];ch=true}}if(ch)await DB.put(e)}
     S.migr=2;await saveSettings()}
+  if((S.migr||0)<3){if(!S.causes.includes('Болезнь')){const i=S.causes.indexOf('Простуда');S.causes.splice(i>=0?i+1:S.causes.length,0,'Болезнь')}const pk=S.exercises.find(x=>x.id==='pushk');if(pk){pk.deleted=true;pk.active=false}S.migr=3;await saveSettings()}
+  if((S.migr||0)<4){S.causes=S.causes.filter(c=>c!=='Стресс');if(!S.emoWhy)S.emoWhy=[...DEFAULTS.emoWhy];S.migr=4;await saveSettings()}
   applyAccent();
   if(S.pin)await lockScreen();
   urlImport();
   document.addEventListener('click',onClick);
+  let sx=null,sy=null;
+  document.addEventListener('touchstart',ev=>{const h=ev.target.closest('#hero');if(!h||ev.touches.length!==1){sx=null;return}sx=ev.touches[0].clientX;sy=ev.touches[0].clientY},{passive:true});
+  document.addEventListener('touchend',ev=>{if(sx==null)return;const dx=ev.changedTouches[0].clientX-sx,dy=ev.changedTouches[0].clientY-sy;sx=null;if(Math.abs(dx)<60||Math.abs(dy)>Math.abs(dx))return;const nd=addDays(ui.date,dx>0?-1:1);if(nd<=todayISO()){ui.date=nd;render()}},{passive:true});
   document.addEventListener('input',onInput);
   document.addEventListener('change',ev=>{if((ev.target.id==='importFile'||ev.target.id==='importFile2')&&ev.target.files[0])doImport(ev.target.files[0])});
-  document.addEventListener('keydown',ev=>{if(ev.key==='Enter'&&ev.target.id==='causeIn'){ev.preventDefault();document.querySelector('[data-causesave]')?.click()}});
+  document.addEventListener('keydown',ev=>{if(ev.key==='Enter'&&ev.target.id==='causeIn'){ev.preventDefault();document.querySelector('[data-causesave]')?.click()}if(ev.key==='Enter'&&ev.target.id==='emoIn'){ev.preventDefault();document.querySelector('[data-emosave]')?.click()}});
   setInterval(()=>{const hm=nowHM();if(ui.tab==='today'&&hm!==ui.lastHM&&!document.activeElement?.matches('input,textarea')){ui.lastHM=hm;rr()}},20000);
-  setInterval(()=>{if(ui.tab==='today'&&!document.activeElement?.matches('input,textarea')){ui.badge++;const b=document.querySelector('[data-badge]');if(b)b.textContent=BADGES()[ui.badge%3]}},5000);
   matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',()=>{applyAccent();rr()});
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){const t=todayISO();if(ui.date>t)ui.date=t;if(ui.tab==='today'){rr();if(ui.awaitPaste)setTimeout(()=>toast('Нажми «Вставить данные»'),300)}}});
   navigator.storage?.persist?.();
