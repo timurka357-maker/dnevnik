@@ -219,6 +219,27 @@ input[type=search],input[type=password],input[type=date],.hin{width:100%;font:in
 .hin{background:var(--card);padding:6px 8px;margin:4px 0 2px;font-weight:700;font-size:18px;border-radius:10px}
 label.m{display:block}
 .wk .ic{background:var(--a-soft)}
+.banner{border:1.5px solid color-mix(in srgb,var(--a1) 45%,transparent)}
+
+.medlist{display:flex;flex-direction:column;gap:8px}
+.med{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:16px;background:var(--card-2)}
+.med .t{font-weight:600}.med .s{font-size:12.5px;color:var(--muted)}
+.med.due{background:color-mix(in srgb,var(--bad) 14%,var(--card));box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--bad) 60%,transparent)}
+.med.due .s{color:var(--bad);font-weight:600}
+.med.taken .t{color:var(--muted)}
+.due-card{box-shadow:0 0 0 1.5px color-mix(in srgb,var(--bad) 45%,transparent)}
+.mbtns{display:flex;gap:6px;flex:none}
+.mbtn{font:inherit;font-size:13.5px;font-weight:600;border:0;border-radius:12px;padding:9px 12px;background:var(--a1);color:var(--on-a1);cursor:pointer}
+.mbtn.ghost{background:var(--card);color:var(--ink)}
+.med.due .mbtn:not(.ghost){background:var(--bad);color:#fff}
+.mstate{font:inherit;font-size:13px;font-weight:600;border:0;border-radius:99px;padding:7px 11px;background:var(--a-soft);color:var(--a1);cursor:pointer;flex:none}
+.mstate.skipped{background:var(--card);color:var(--muted)}
+.medit{padding:8px 0;border-bottom:1px solid var(--line)}
+input[type=time]{width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--card-2);border:1px solid transparent;border-radius:14px;padding:10px 12px}
+.add.pulse{border-style:solid;border-color:var(--a1);color:var(--a1);animation:pl 1.2s ease-in-out infinite}
+@keyframes pl{50%{background:var(--a-soft)}}
+@media (prefers-reduced-motion:reduce){.add.pulse{animation:none}}
+.mtag{font-size:10.5px;font-weight:600;color:var(--a1);background:var(--a-soft);padding:1px 6px;border-radius:99px;margin-left:4px}
 .wk .x{flex-direction:row;align-items:center;gap:6px}
 .form .seg,.form .chips{grid-column:1/-1}
 #lock{position:fixed;inset:0;background:var(--bg);z-index:50;display:grid;place-items:center;padding:24px}
@@ -241,7 +262,7 @@ label.m{display:block}
 <script>
 'use strict';
 /* ===== Дневник восстановления · данные хранятся только на этом устройстве (IndexedDB) ===== */
-const APP_VERSION = '1.1';
+const APP_VERSION = '1.5';
 const MON=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 const MONN=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 const WD=['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'], WDS=['вс','пн','вт','ср','чт','пт','сб'];
@@ -278,14 +299,14 @@ const DB={db:null,
 };
 const DEFAULTS={
   start:'2026-06-09', accent:'graphite',
-  meds:[{id:'vitd',n:'Витамин D (АкваДетрим)',d:'2000 МЕ · утро',active:true},{id:'mg',n:'Магний бисглицинат',d:'200 мг · вечер',active:true}],
+  meds:[{id:'vitd',n:'Витамин D (АкваДетрим)',dose:'2000 МЕ',time:'08:00',active:true},{id:'mg',n:'Магний бисглицинат',dose:'200 мг',time:'21:00',active:true}],
   exercises:[
     {id:'plank',n:'Планка',u:'s',step:5,active:true},{id:'hang',n:'Вис на турнике',u:'s',step:5,active:true},
     {id:'squat',n:'Приседания',u:'n',step:5,active:true},{id:'push',n:'Отжимания',u:'n',step:1,active:true},
     {id:'pushk',n:'Отжимания с колен',u:'n',step:1,active:false},
     {id:'kb_swing',n:'Гиря, мах',u:'n',step:5,kg:6,active:true},{id:'kb_lift',n:'Гиря, подъём на руку',u:'n',step:1,kg:6,active:true},
     {id:'abs',n:'Пресс',u:'n',step:5,active:false}],
-  causes:['Руль','Работа руками','Гиря, турник','Гребля','Долгая ходьба','Недосып','Стресс','Холод','Простуда','Не знаю'],
+  causes:['Руль','Работа руками','Гиря, турник','Гребля','Долгая ходьба','Бег','Недосып','Стресс','Холод','Простуда','Не знаю'],
   dayTypes:['Рабочий день','Выходной','Командировка','Дорога','Природа, поход','Рыбалка','Праздник','Баня'],
   symptoms:['Насморк','Горло','Кашель','Ломота','Головная боль','Слабость во всём теле'],
   sober:{alc:'2025-12-28',smoke:'2026-01-30'},
@@ -301,7 +322,7 @@ const saveTimers={};
 function saveEntry(e){e.updated=Date.now();E.set(e.date,e);clearTimeout(saveTimers[e.date]);saveTimers[e.date]=setTimeout(()=>DB.put(e).catch(err=>toast('Не удалось сохранить: '+err.message)),250)}
 function entry(date){return E.get(date)||{date,health:{},ex:{},workouts:[],causes:[],dayType:[],sym:[],meds:{}}}
 function norm(e){e.health??={};e.ex??={};e.workouts??=[];e.causes??=[];e.dayType??=[];e.sym??=[];e.meds??={};return e}
-const hasContent=e=>e&&(e.note||e.arms!=null||e.legs!=null||Object.keys(e.health||{}).length||Object.keys(e.ex||{}).length||(e.workouts||[]).length||e.mood);
+const hasContent=e=>e&&(Object.keys(e.meds||{}).length||e.note||e.arms!=null||e.legs!=null||Object.keys(e.health||{}).length||Object.keys(e.ex||{}).length||(e.workouts||[]).length||e.mood);
 const dayN=date=>daysBetween(S.start,date)+1;
 
 /* ---------- helpers ---------- */
@@ -332,6 +353,10 @@ function scale(e,key,title){
   <div class="scale" role="radiogroup" aria-label="${title}">${Array.from({length:11},(_,i)=>`<button role="radio" data-scale="${key}" data-v="${i}" aria-pressed="${i===v}" aria-checked="${i===v}">${i}</button>`).join('')}</div></div>`;
 }
 
+/* ---------- meds ---------- */
+const nowHM=()=>{const d=new Date();return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`};
+function medState(e,m,date){const r=e.meds?.[m.id];if(r?.st==='taken')return'taken';if(r?.st==='skipped')return'skipped';const t=todayISO();if(date===t)return m.time&&nowHM()>=m.time?'due':'pending';return date<t?'unmarked':'pending'}
+function medLine(e,m){const r=e.meds?.[m.id];if(!r)return null;const nm=m.n.split(' (')[0];return r.st==='taken'?`${nm} ${r.dose||m.dose||''} ✓ ${r.at||''}`.replace(/\s+/g,' ').trim():r.st==='skipped'?`${nm} — пропущено`:null}
 /* ---------- stats ---------- */
 function streak(){let d=todayISO();if(!hasContent(E.get(d)))d=addDays(d,-1);let n=0;while(hasContent(E.get(d))){n++;d=addDays(d,-1)}return n}
 function exHistory(id,before,kg){
@@ -348,6 +373,16 @@ function weightWeekDelta(date){const e=E.get(date);if(!e?.health?.w)return null;
 const BADGES=()=>{const t=todayISO(),s=streak();const a=daysBetween(S.sober.alc,t),c=daysBetween(S.sober.smoke,t);
   return[`${s} ${plural(s,'день','дня','дней')} подряд`,`${a} ${plural(a,'день','дня','дней')} без алкоголя`,`${c} ${plural(c,'день','дня','дней')} без сигарет`]};
 
+function weeklyBanner(){
+  const now=new Date(),tday=now.toDateString();
+  if(ui.date!==todayISO()||S.snooze===tday)return '';
+  const since=S.lastExport?(Date.now()-S.lastExport)/DAY:999,doneToday=S.lastExport&&new Date(S.lastExport).toDateString()===tday;
+  if(!((now.getDay()===0&&now.getHours()>=18&&!doneToday)||since>=8))return '';
+  return `<section class="card banner"><div class="ch">${h2('Воскресная копия')}<span class="aside">${S.lastExport?'прошлая '+new Date(S.lastExport).toLocaleDateString('ru-RU'):'ещё не было'}</span></div>
+    <div class="sub" style="margin-bottom:10px">1. Загрузи данные «Здоровья» за неделю из файла Команды. 2. Сделай копию и сохрани её в Google Диск или iCloud.</div>
+    <div class="form"><label class="btn sm ghost full" for="importFile2" style="text-align:center">Загрузить данные «Здоровья»</label><button class="btn sm" data-export="json">Сделать копию</button><button class="btn sm ghost" data-snooze>Позже</button></div>
+    <input type="file" id="importFile2" accept=".json,.txt,application/json,text/plain" hidden></section>`;
+}
 function today(){
   const d=ui.date,e=norm(entry(d)),h=e.health,n=dayN(d),dt=pd(d),isToday=d===todayISO();
   const prev=E.get(addDays(d,-1)),sickUp=e.sick||prev?.sick;
@@ -359,12 +394,13 @@ function today(){
   </section>`;
   const peek=[h.sl!=null&&`сон <b>${fmtHM(h.sl)}${h.sq!=null?' · '+h.sq:''}</b>`,h.rhr!=null&&`пульс <b>${h.rhr}</b>`,h.hrv!=null&&`ВСР <b>${h.hrv}</b>`,h.wtemp!=null&&`t° <b>${h.wtemp>0?'+':''}${dec(h.wtemp)}</b>`,h.w!=null&&`вес <b>${dec(h.w)}</b>`].filter(Boolean);
   const wd=weightWeekDelta(d);
-  const tile=(k,label,val,unit,sub,inputVal,mode='decimal')=>ui.editHealth?`<label class="m"><span class="k">${label}</span><input class="hin" data-h="${k}" inputmode="${mode}" value="${esc(inputVal??'')}" placeholder="—"><span class="d">${unit}</span></label>`:`<div class="m"><div class="k">${label}</div><div class="v num">${val??'—'}${val!=null&&unit?`<span>${unit}</span>`:''}</div>${sub?`<div class="d">${sub}</div>`:''}</div>`;
+  const mk=k=>h.manual?.[k]?' <span class="mtag">исправлено</span>':'';
+  const tile=(k,label,val,unit,sub,inputVal,mode='decimal')=>ui.editHealth?`<label class="m"><span class="k">${label}</span><input class="hin" data-h="${k}" inputmode="${mode}" value="${esc(inputVal??'')}" placeholder="—"><span class="d">${unit}</span></label>`:`<div class="m"><div class="k">${label}${mk(k)}</div><div class="v num">${val??'—'}${val!=null&&unit?`<span>${unit}</span>`:''}</div>${sub?`<div class="d">${sub}</div>`:''}</div>`;
   const stages=h.deep!=null||h.rem!=null||h.core!=null;
   const watch=`<section class="card"><button class="collapse" data-watch aria-expanded="${ui.watchOpen}">${h2('Apple Watch')}<span class="sub">${h.src?esc(h.src):Object.keys(h).length?'из заметок':'нет данных'} <span class="chev" aria-hidden="true">›</span></span></button>
     ${ui.watchOpen?`<div class="mgrid" style="margin-top:12px">
       ${ui.editHealth?`<label class="m"><span class="k">Сон, ч:мин</span><input class="hin" data-h="sl" inputmode="text" value="${h.sl!=null?fmtHM(h.sl):''}" placeholder="6:49"><span class="d">длительность</span></label>`+tile('sq','Оценка сна',0,'0–100','',h.sq,'numeric'):
-       `<div class="m wide"><div class="k">Сон${h.sq!=null?' · оценка '+h.sq:''}</div><div class="v num">${h.sl!=null?fmtSleep(h.sl):'—'}${h.bed?`<span>${esc(h.bed)} → ${esc(h.wake||'')}</span>`:''}</div>
+       `<div class="m wide"><div class="k">Сон${h.sq!=null?' · оценка '+h.sq:''}${mk('sl')}</div><div class="v num">${h.sl!=null?fmtSleep(h.sl):'—'}${h.bed?`<span>${esc(h.bed)} → ${esc(h.wake||'')}</span>`:''}</div>
         ${stages?`<div class="stages"><span style="flex:${h.deep||0};background:var(--sleep)"></span><span style="flex:${h.rem||0};background:var(--rec)"></span><span style="flex:${h.core||0};background:var(--ex)"></span><span style="flex:${h.awake||0};background:var(--line)"></span></div><div class="slegend num"><span><i style="background:var(--sleep)"></i>глубокий ${h.deep??'—'} мин</span><span><i style="background:var(--rec)"></i>REM ${h.rem??'—'} мин</span><span><i style="background:var(--ex)"></i>базовый ${h.core??'—'} мин</span><span><i style="background:var(--line)"></i>пробуждения ${h.awake??'—'} мин</span></div>`:''}
         ${h.slNote?`<div class="d">${esc(h.slNote)}</div>`:''}</div>`}
       ${tile('steps','Шаги',h.steps!=null?nf(h.steps):null,'',h.km!=null?dec(h.km)+' км':'',h.steps,'numeric')}
@@ -376,8 +412,9 @@ function today(){
       ${tile('resp','Дыхание ночью',h.resp!=null?dec(h.resp):null,'/мин','',h.resp)}
       ${tile('kcal','Активные калории',h.kcal,'ккал','',h.kcal,'numeric')}
       ${tile('exmin','Упражнения',h.exmin,'мин','',h.exmin,'numeric')}
-    </div><button class="add" data-edithealth>${ui.editHealth?'Готово':'Изменить вручную'}</button>`:`<div class="peek num">${peek.length?peek.map(p=>`<span>${p}</span>`).join(''):'<span>Запусти Команду «Записать день» или впиши вручную</span>'}</div>`}
-    <button class="add" data-pastehealth>Вставить из «Здоровья»</button>
+    </div><button class="add" data-edithealth>${ui.editHealth?'Готово':'Исправить вручную'}</button>${ui.editHealth?'<div class="sub" style="margin-top:8px">Исправленные поля Команда больше не перезапишет. Чтобы вернуть данные из «Здоровья», очисти поле и вставь заново.</div>':''}`:`<div class="peek num">${peek.length?peek.map(p=>`<span>${p}</span>`).join(''):'<span>Запусти Команду «Записать день» или впиши вручную</span>'}</div>`}
+    <div class="form" style="margin-top:10px"><button class="btn sm ghost" data-runsc="day">Данные дня</button><button class="btn sm ghost" data-runsc="sleep">Сон</button></div>
+    <button class="add${ui.awaitPaste?' pulse':''}" data-pastehealth>${ui.awaitPaste?'Вставить данные':'Вставить из «Здоровья»'}</button>
     ${ui.pasteBox?`<div class="inline"><input type="text" id="pasteIn" placeholder="Вставь сюда текст из Команды"><button class="btn sm" data-pasteok style="width:auto">Готово</button></div>`:''}
   </section>`;
   const allCauses=[...new Set([...S.causes,...e.causes])];
@@ -405,11 +442,16 @@ function today(){
       <div class="x">${w.type==='walk'?`бег<button class="tog" data-run="${i}" aria-pressed="${!!w.run}" aria-label="Был бег"></button>`:esc(w.src||'')}<button class="del" data-delwk="${i}" aria-label="Удалить">×</button></div></div>`).join('')}
     ${ui.addWk?`<div class="form"><div class="chips full">${WK_TYPES.map(([k,l])=>`<button class="chip" data-wkt="${k}" aria-pressed="${ui.wkT===k}">${l}</button>`).join('')}</div><input type="text" id="wkDist" placeholder="Дистанция: 5 км"><input type="text" id="wkTime" placeholder="Время: 45 мин"><button class="btn sm full" data-wksave>Добавить тренировку</button></div>`:`<button class="add" data-addwk>+ Добавить тренировку</button>`}
   </section>`;
-  const meds=S.meds.filter(m=>m.active||e.meds[m.id]!=null);
-  const medsC=`<section class="card"><div class="ch">${h2('Препараты')}<span class="aside num">${meds.filter(m=>e.meds[m.id]).length} из ${meds.length}</span></div>
+  const meds=S.meds.filter(m=>m.active||e.meds[m.id]!=null).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+  const anyDue=meds.some(m=>medState(e,m,d)==='due');
+  const medRow=m=>{const st=medState(e,m,d),r=e.meds[m.id]||{};
+    const sub=st==='taken'?`принял в ${esc(r.at||'')} · ${esc(r.dose||m.dose||'')}`:st==='skipped'?'пропущено':st==='due'?`пора принять · ${esc(m.time)} · ${esc(m.dose||'')}`:`${esc(m.time||'')} · ${esc(m.dose||'')}`;
+    const act=st==='taken'||st==='skipped'?`<button class="mstate ${st}" data-medundo="${m.id}" aria-label="Отменить отметку">${st==='taken'?'✓ принял':'пропустил'}</button>`:`<div class="mbtns"><button class="mbtn ghost" data-medskip="${m.id}">Пропустил</button><button class="mbtn" data-medtake="${m.id}">Принял</button></div>`;
+    return `<div class="med ${st}"><div style="min-width:0"><div class="t">${esc(m.n)}</div><div class="s">${sub}</div></div>${act}</div>`};
+  const medsC=`<section class="card${anyDue?' due-card':''}"><div class="ch">${h2('Препараты')}<span class="aside num">${meds.filter(m=>e.meds[m.id]?.st==='taken').length} из ${meds.length}</span></div>
     ${e.medsNote?`<div class="sub" style="margin-bottom:4px">Из старой записи: ${esc(e.medsNote)}</div>`:''}
-    ${meds.map(m=>`<div class="row"><div><div class="t">${esc(m.n)}</div><div class="s">${esc(m.d)}</div></div><button class="check" data-med="${m.id}" aria-pressed="${!!e.meds[m.id]}" aria-label="${esc(m.n)}">${CHECK}</button></div>`).join('')}
-    ${ui.addMed?`<div class="form"><input type="text" class="full" id="medName" placeholder="Название"><input type="text" id="medDose" placeholder="Доза"><input type="text" id="medTime" placeholder="Когда: утро, вечер"><button class="btn sm full" data-medsave>Добавить в список</button></div><div class="sub" style="margin-top:8px">Перед новым препаратом спроси Claude о совместимости: в профиле есть запрет на высокий B6.</div>`:`<button class="add" data-addmed>+ Добавить препарат</button>`}
+    <div class="medlist">${meds.map(medRow).join('')}</div>
+    ${ui.addMed?`<div class="form"><input type="text" class="full" id="medName" placeholder="Название"><input type="text" id="medDose" placeholder="Доза: 2000 МЕ"><input type="time" id="medTime" value="08:00" aria-label="Время приёма"><button class="btn sm full" data-medsave>Добавить в список</button></div><div class="sub" style="margin-top:8px">Перед новым препаратом спроси Claude о совместимости: в профиле есть запрет на высокий B6.</div>`:`<button class="add" data-addmed>+ Добавить препарат</button>`}
   </section>`;
   const dayType=`<section class="card"><div class="ch">${h2('Какой был день')}</div><div class="chips">${[...new Set([...S.dayTypes,...e.dayType])].map(t=>chip('data-daytype',t,e.dayType.includes(t))).join('')}</div></section>`;
   const stool=`<section class="card"><div class="ch">${h2('Стул')}</div><div class="seg">${['норма','жидкий','твёрдый'].map(s=>`<button data-stool="${s}" aria-pressed="${e.stool===s}">${s}</button>`).join('')}</div>${e.stoolNote?`<div class="sub" style="margin-top:8px">${esc(e.stoolNote)}</div>`:''}</section>`;
@@ -418,7 +460,7 @@ function today(){
     ${e.sick?`<div style="margin-top:14px"><div class="chips">${S.symptoms.map(s=>chip('data-sym',s,e.sym.includes(s))).join('')}</div><div class="row" style="padding-bottom:0"><div class="t">Температура</div><input type="text" inputmode="decimal" id="temp" placeholder="36,6" value="${esc(e.temp??'')}" style="width:96px;text-align:center"></div></div>`:''}</section>`;
   const pw=prevWaist(d);
   const waist=`<section class="card"><div class="row" style="padding:0"><div>${h2('Обхват живота')}<div class="s">раз в неделю${pw?` · прошлый ${dec(pw.v)} см, ${pd(pw.d).getDate()} ${MON[pd(pw.d).getMonth()]}`:''}</div></div><input type="text" inputmode="decimal" id="waist" placeholder="см" value="${esc(e.waist??'')}" style="width:86px;text-align:center"></div></section>`;
-  const blocks=[hero,watch,weak,...(sickUp?[sick]:[]),mood,train,medsC,dayType,stool,note,...(sickUp?[]:[sick]),waist];
+  const blocks=[weeklyBanner(),hero,...(anyDue?[medsC]:[]),watch,weak,...(sickUp?[sick]:[]),mood,train,...(anyDue?[]:[medsC]),dayType,stool,note,...(sickUp?[]:[sick]),waist];
   return blocks.join('')+`<button class="btn" data-save>Сохранить день ${n}</button>`;
 }
 
@@ -564,12 +606,12 @@ function more(){
     ${it('Полная копия (.json)','Резервная копия всех записей и настроек','data-export="json"')}
     <div class="sub" style="padding-top:8px">Откроется меню «Поделиться»: «Сохранить в Файлы», Telegram, почта.</div></section>
   <section class="card"><div class="ch">${h2('Загрузка')}<span class="aside num">${cnt} ${plural(cnt,'запись','записи','записей')}</span></div>
-    <label class="row rowbtn" for="importFile"><div><div class="t">Загрузить записи из файла</div><div class="s">Старые записи или полная копия (.json). Существующие дни не перезапишутся</div></div><span class="sub">›</span></label>
-    <input type="file" id="importFile" accept=".json,application/json" hidden></section>
-  <section class="card"><div class="ch">${h2('Google Диск')}<span class="aside">следующий шаг</span></div><div class="sub">Автоматическая копия на твой Диск. Подключим, когда приложение будет на GitHub.</div></section>
+    <label class="row rowbtn" for="importFile"><div><div class="t">Загрузить из файла</div><div class="s">Записи или копия (.json) либо файл Команды с данными «Здоровья» (.txt). Твои записи и исправления не перезапишутся</div></div><span class="sub">›</span></label>
+    <input type="file" id="importFile" accept=".json,.txt,application/json,text/plain" hidden></section>
+  <section class="card"><div class="ch">${h2('Копия в Google Диск')}</div><div class="sub">Поставь приложение «Google Диск» и войди в него. Потом: «Полная копия (.json)» → в меню «Поделиться» выбери «Диск» (или «Сохранить в Файлы» → Google Диск) → папка «Дневник». Восстановление: «Загрузить из файла» и выбрать эту копию.</div><button class="btn sm" data-export="json" style="margin-top:10px">Сделать копию сейчас</button></section>
   <section class="card"><div class="ch">${h2('Оформление')}<span class="aside">тема — как на iPhone</span></div>${swatches()}</section>
   <section class="card"><div class="ch">${h2('Настройки дневника')}</div>
-    ${it('Препараты',S.meds.filter(x=>x.active).map(x=>x.n.split(' (')[0]).join(', ')||'список пуст','data-manage="meds"')}
+    ${it('Препараты',S.meds.filter(x=>x.active).map(x=>`${x.n.split(' (')[0]} ${x.time||''}`).join(', ')||'список пуст','data-manage="meds"')}
     ${it('Упражнения',S.exercises.filter(x=>x.active).map(x=>x.n).join(', '),'data-manage="ex"')}
     ${it('Причины слабости',S.causes.length+' вариантов','data-manage="causes"')}
     ${it('Даты и цели',`начало ${pd(S.start).toLocaleDateString('ru-RU')} · сон ${fmtHM(S.goals.sleep)} · ${nf(S.goals.steps)} шагов`,'data-manage="dates"')}
@@ -582,9 +624,11 @@ function more(){
 }
 function manage(m){
   const back=`<button class="backbtn" data-manage="">‹ Ещё</button>`;
-  if(m==='meds')return back+`<div class="h1">Препараты</div><section class="card">${S.meds.map(x=>`<div class="row"><div><div class="t">${esc(x.n)}</div><div class="s">${esc(x.d)}${x.active?'':' · в архиве'}</div></div><button class="tog" data-medact="${x.id}" aria-pressed="${x.active}" aria-label="Принимаю сейчас"></button></div>`).join('')}
-    <div class="form"><input type="text" class="full" id="medName" placeholder="Название"><input type="text" id="medDose" placeholder="Доза"><input type="text" id="medTime" placeholder="Когда"><button class="btn sm full" data-medsave>Добавить</button></div>
-    <div class="sub" style="margin-top:8px">Выключенный препарат уходит в архив: из дня он пропадает, а история сохраняется.</div></section>`;
+  if(m==='meds')return back+`<div class="h1">Препараты</div><section class="card">${S.meds.map(x=>`<div class="medit"><div class="row" style="padding-bottom:4px"><input type="text" class="hin" data-medf="n" data-id="${x.id}" value="${esc(x.n)}" aria-label="Название" style="font-size:16px"><button class="tog" data-medact="${x.id}" aria-pressed="${x.active}" aria-label="Принимаю сейчас"></button></div>
+      <div class="form" style="margin-top:0"><input type="text" data-medf="dose" data-id="${x.id}" value="${esc(x.dose||'')}" placeholder="Доза" aria-label="Доза"><input type="time" data-medf="time" data-id="${x.id}" value="${esc(x.time||'')}" aria-label="Время"></div>${x.active?'':'<div class="sub">в архиве</div>'}</div>`).join('')}
+    <div class="lbl" style="margin:14px 0 6px">Новый препарат</div>
+    <div class="form"><input type="text" class="full" id="medName" placeholder="Название"><input type="text" id="medDose" placeholder="Доза"><input type="time" id="medTime" value="08:00" aria-label="Время"><button class="btn sm full" data-medsave>Добавить</button></div>
+    <div class="sub" style="margin-top:8px">Изменения сохраняются сразу. Новая доза действует с сегодняшнего дня, в прошлых днях остаётся та, что была. Выключенный препарат уходит в архив, история сохраняется.</div></section>`;
   if(m==='ex')return back+`<div class="h1">Упражнения</div><section class="card">${S.exercises.map(x=>`<div class="row"><div><div class="t">${esc(x.n)}</div><div class="s">${x.u==='s'?'секунды':'раз'}${x.kg!=null?' · '+dec(x.kg)+' кг':''}${x.active?'':' · скрыто'}</div></div><button class="tog" data-exact="${x.id}" aria-pressed="${x.active}" aria-label="Показывать"></button></div>`).join('')}
     <div class="form"><input type="text" class="full" id="exName" placeholder="Новое упражнение"><div class="seg full">${['раз','секунды'].map(u=>`<button data-exu="${u}" aria-pressed="${ui.exU===u}">${u}</button>`).join('')}</div><input type="text" class="full" inputmode="decimal" id="exKg" placeholder="Вес, кг (если есть)"><button class="btn sm full" data-exsave>Добавить</button></div></section>`;
   if(m==='causes')return back+`<div class="h1">Причины слабости</div><section class="card">${S.causes.map((c,i)=>`<div class="row"><div class="t">${esc(c)}</div><button class="del" data-delcause="${i}" aria-label="Убрать">×</button></div>`).join('')}
@@ -614,7 +658,7 @@ function entryMD(e){const d=pd(e.date),h=e.health||{},L=[];
   const ex=Object.entries(e.ex||{}).filter(([,x])=>x.v).map(([id,x])=>{const d=exById(id);return `${d.n} ${fmtEx(d,x.v)}${x.kg?` (${dec(x.kg)} кг)`:''}`});
   if(e.charge||ex.length)L.push(`Зарядка${e.charge?' '+e.charge:''}${ex.length?': '+ex.join(' · '):''}`);
   if(e.workouts?.length)L.push('Тренировки: '+e.workouts.map(w=>[w.t,w.dist,w.time,w.type==='walk'&&w.run?`бег ${w.runM||0} м`:''].filter(Boolean).join(' ')).join('; '));
-  const md=S.meds.filter(x=>e.meds?.[x.id]!=null).map(x=>`${x.n.split(' (')[0]} ${e.meds[x.id]?'✓':'—'}`);
+  const md=S.meds.map(x=>medLine(e,x)).filter(Boolean);
   if(md.length||e.medsNote)L.push(`Препараты: ${md.join(', ')||e.medsNote}`);
   const o=[];if(e.stool)o.push(`Стул ${e.stool}${e.stoolNote&&e.stoolNote!==e.stool?' ('+e.stoolNote+')':''}`);if(e.dayType?.length)o.push(`День: ${e.dayType.join(', ').toLowerCase()}`);if(e.waist)o.push(`Живот ${dec(e.waist)} см`);
   if(o.length)L.push(o.join('  ·  '));
@@ -624,7 +668,7 @@ function entryMD(e){const d=pd(e.date),h=e.health||{},L=[];
 function buildMD(l){let out=`# Дневник восстановления\n\nВыгрузка ${new Date().toLocaleDateString('ru-RU')} · записей: ${l.length}\n`;let cm='';for(const e of l){const k=e.date.slice(0,7);if(k!==cm){cm=k;out+=`\n## ${MONN[+k.slice(5)-1]} ${k.slice(0,4)}\n`}out+='\n'+entryMD(e)+'\n'}return out}
 function buildCSV(l){const exIds=S.exercises.map(x=>x.id);const cols=['date','day','arms','legs','causes','drive_h','mood','sleep_h','sleep_score','steps','km','weight','rhr','hrv','wrist_temp','resp','kcal','ex_min','charge',...exIds.map(i=>'ex_'+i),...exIds.filter(i=>exById(i).kg!=null).map(i=>'kg_'+i),'workouts','meds','sick','symptoms','temp','stool','day_type','waist','note'];
   const q=v=>{if(v==null)return '';const s=String(v);return /[;"\n]/.test(s)?`"${s.replace(/"/g,'""')}"`:s};
-  const rows=l.map(e=>{const h=e.health||{};return[e.date,dayN(e.date),e.arms,e.legs,(e.causes||[]).join(', '),e.drive,e.mood,h.sl!=null?+h.sl.toFixed(2):'',h.sq,h.steps,h.km,h.w,h.rhr,h.hrv,h.wtemp,h.resp,h.kcal,h.exmin,e.charge,...exIds.map(i=>e.ex?.[i]?.v),...exIds.filter(i=>exById(i).kg!=null).map(i=>e.ex?.[i]?.kg),(e.workouts||[]).map(w=>[w.t,w.dist,w.time].filter(Boolean).join(' ')).join('; '),S.meds.filter(x=>e.meds?.[x.id]).map(x=>x.n).join(', ')||e.medsNote,e.sick?1:'',(e.sym||[]).join(', '),e.temp,e.stool,(e.dayType||[]).join(', '),e.waist,e.note].map(v=>q(typeof v==='number'?dec(v):v)).join(';')});
+  const rows=l.map(e=>{const h=e.health||{};return[e.date,dayN(e.date),e.arms,e.legs,(e.causes||[]).join(', '),e.drive,e.mood,h.sl!=null?+h.sl.toFixed(2):'',h.sq,h.steps,h.km,h.w,h.rhr,h.hrv,h.wtemp,h.resp,h.kcal,h.exmin,e.charge,...exIds.map(i=>e.ex?.[i]?.v),...exIds.filter(i=>exById(i).kg!=null).map(i=>e.ex?.[i]?.kg),(e.workouts||[]).map(w=>[w.t,w.dist,w.time].filter(Boolean).join(' ')).join('; '),S.meds.map(x=>medLine(e,x)).filter(Boolean).join(', ')||e.medsNote,e.sick?1:'',(e.sym||[]).join(', '),e.temp,e.stool,(e.dayType||[]).join(', '),e.waist,e.note].map(v=>q(typeof v==='number'?dec(v):v)).join(';')});
   return '﻿'+cols.join(';')+'\n'+rows.join('\n')}
 async function shareFile(name,text,type){
   const file=new File([text],name,{type});
@@ -641,7 +685,10 @@ async function doExport(kind){
   if(ok){S.lastExport=Date.now();await saveSettings();render()}
 }
 async function doImport(file){
-  try{const data=JSON.parse(await file.text());if(data.app!=='dnevnik'||!Array.isArray(data.entries))throw new Error('Это не файл дневника');
+  try{const txt=await file.text();
+    if(!txt.trim().startsWith('{')){let days=new Set();for(const line of txt.split(/\r?\n/)){const q=line.slice(line.indexOf('?')+1).trim();if(!/(^|&)d=\d{4}-\d\d-\d\d/.test(q))continue;const p=new URLSearchParams(q);if(applyParams(p,false,true))days.add(p.get('d'))}
+      if(!days.size)throw new Error('В файле нет данных из «Здоровья»');toast(`Данные из «Здоровья» добавлены за ${days.size} ${plural(days.size,'день','дня','дней')}`);render();return}
+    const data=JSON.parse(txt);if(data.app!=='dnevnik'||!Array.isArray(data.entries))throw new Error('Это не файл дневника');
     const wasEmpty=![...E.values()].some(hasContent);
     let add=0,skip=0;for(const e of data.entries){if(!e.date||!/^\d{4}-\d\d-\d\d$/.test(e.date))continue;if(hasContent(E.get(e.date))){skip++;continue}const n=norm(e);E.set(n.date,n);await DB.put(n);add++}
     if(data.kind==='backup'&&wasEmpty&&data.settings&&Array.isArray(data.settings.exercises)){S={...structuredClone(DEFAULTS),...data.settings};await saveSettings();applyAccent()}
@@ -659,14 +706,14 @@ async function pasteHealth(){
   if(!/(sl|steps|rhr|w)=/.test(txt)){ui.pasteBox=true;rr();return}
   if(applyParams(new URLSearchParams(txt.slice(txt.indexOf('?')+1).trim()),false))rr();else toast('В буфере нет данных из «Здоровья»');
 }
-function applyParams(p,fromUrl){
+function applyParams(p,fromUrl,silent){
   const date=p.get('d')||(fromUrl?todayISO():ui.date);const e=norm(entry(date));const h=e.health;let n=0;
-  const set=(k,v)=>{if(v!=null&&!isNaN(v)){h[k]=v;n++}};
+  const man=h.manual||{};const set=(k,v)=>{if(v!=null&&!isNaN(v)&&!man[k]){h[k]=v;n++}};
   {let v=parseSleep(p.get('sl'));if(v!=null){if(v>1440)v=v/3600;else if(v>24)v=v/60;set('sl',Math.round(v*1000)/1000)}}for(const k of['sq','deep','rem','core','awake','rhr','hrv','kcal','exmin','stand','steps'])set(k,p.has(k)?Math.round(parseNum(p.get(k))):null);
   for(const k of['km','w','resp','wtemp'])set(k,p.has(k)?Math.round(parseNum(p.get(k))*100)/100:null);
   if(p.get('bed'))h.bed=p.get('bed');if(p.get('wake'))h.wake=p.get('wake');
   if(p.get('wk')){e.workouts=e.workouts.filter(w=>w.src!=='Здоровье');for(const s of p.get('wk').split(';')){const[type,dist,time]=s.split('|');if(!type)continue;const k=WK[type]?type:'other';e.workouts.push({type:k,t:WK[k][0],dist:dist||'',time:time||'',src:'Здоровье'})}n++}
-  if(n){h.src='Команда · '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});saveEntry(e);ui.date=date;setTimeout(()=>toast('Данные из «Здоровья» добавлены'),300)}
+  if(n){h.src='Команда · '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});saveEntry(e);if(!silent){ui.date=date;setTimeout(()=>toast('Данные из «Здоровья» добавлены'),300)}}
   return n;
 }
 
@@ -695,7 +742,8 @@ function onInput(ev){
   else if(id==='waist'){e.waist=parseNum(t.value);saveEntry(e)}
   else if(id==='temp'){e.temp=t.value;saveEntry(e)}
   else if(id==='search'){ui.q=t.value;clearTimeout(onInput.t);onInput.t=setTimeout(()=>{render(true);const s=$('search');s.focus();s.setSelectionRange(s.value.length,s.value.length)},250)}
-  else if(t.dataset.h){const k=t.dataset.h;const v=k==='sl'?parseSleep(t.value):parseNum(t.value);if(v==null)delete e.health[k];else e.health[k]=v;if(!e.health.src)e.health.src='вручную';saveEntry(e)}
+  else if(t.dataset.h){const k=t.dataset.h;const v=k==='sl'?parseSleep(t.value):parseNum(t.value);e.health.manual??={};if(v==null){delete e.health[k];delete e.health.manual[k]}else{e.health[k]=v;e.health.manual[k]=true}if(!e.health.src)e.health.src='вручную';saveEntry(e)}
+  else if(t.dataset.medf){const m=S.meds.find(x=>x.id===t.dataset.id);if(m){m[t.dataset.medf]=t.value;clearTimeout(onInput.ms);onInput.ms=setTimeout(saveSettings,300)}}
   else if(t.dataset.runm!=null){e.workouts[+t.dataset.runm].runM=parseNum(t.value);saveEntry(e)}
 }
 async function onClick(ev){
@@ -706,7 +754,8 @@ async function onClick(ev){
   if('badge' in ds){ui.badge++;return rr()}
   if(ds.accent){S.accent=ds.accent;applyAccent();await saveSettings();return rr()}
   if('watch' in ds){ui.watchOpen=!ui.watchOpen;if(!ui.watchOpen)ui.editHealth=false;return rr()}
-  if('pastehealth' in ds){return pasteHealth()}
+  if(ds.runsc){const name=ds.runsc==='sleep'?'Записать сон':'Записать день';ui.awaitPaste=true;rr();location.href=`shortcuts://run-shortcut?name=${encodeURIComponent(name)}&input=text&text=${ui.date}`;return}
+  if('pastehealth' in ds){ui.awaitPaste=false;return pasteHealth()}
   if('pasteok' in ds){const v=$('pasteIn').value;ui.pasteBox=false;if(!applyParams(new URLSearchParams(v.slice(v.indexOf('?')+1).trim()),false))toast('Не нашёл данных в тексте');return rr()}
   if('edithealth' in ds){ui.editHealth=!ui.editHealth;return rr()}
   if(ds.scale){const v=+ds.v;e[ds.scale]=e[ds.scale]===v?null:v;saveEntry(e);return rr()}
@@ -731,9 +780,11 @@ async function onClick(ev){
   if('addwk' in ds){ui.addWk=true;return rr()}
   if(ds.wkt){ui.wkT=ds.wkt;return rr()}
   if('wksave' in ds){const k=ui.wkT;e.workouts.push({type:k,t:WK[k][0],dist:$('wkDist').value.trim(),time:$('wkTime').value.trim(),src:'вручную'});ui.addWk=false;saveEntry(e);return rr()}
-  if(ds.med){e.meds[ds.med]=!e.meds[ds.med];saveEntry(e);return rr()}
+  if(ds.medtake){const m=S.meds.find(x=>x.id===ds.medtake);e.meds[m.id]={st:'taken',at:ui.date===todayISO()?nowHM():(m.time||''),dose:m.dose||'',plan:m.time||''};saveEntry(e);toast(`${m.n.split(' (')[0]}: принято`);return rr()}
+  if(ds.medskip){const m=S.meds.find(x=>x.id===ds.medskip);e.meds[m.id]={st:'skipped',dose:m.dose||'',plan:m.time||''};saveEntry(e);return rr()}
+  if(ds.medundo){delete e.meds[ds.medundo];saveEntry(e);return rr()}
   if('addmed' in ds){ui.addMed=true;return rr()}
-  if('medsave' in ds){const n=$('medName').value.trim();if(n){S.meds.push({id:'m'+uid(),n,d:[$('medDose').value.trim(),$('medTime').value.trim()].filter(Boolean).join(' · '),active:true});await saveSettings()}ui.addMed=false;return rr()}
+  if('medsave' in ds){const n=$('medName').value.trim();if(n){S.meds.push({id:'m'+uid(),n,dose:$('medDose').value.trim(),time:$('medTime').value||'08:00',active:true});await saveSettings()}ui.addMed=false;return rr()}
   if(ds.medact){const m=S.meds.find(x=>x.id===ds.medact);m.active=!m.active;await saveSettings();return rr()}
   if('sick' in ds){e.sick=!e.sick;saveEntry(e);return rr()}
   if(ds.sym){const s=ds.sym;e.sym=e.sym.includes(s)?e.sym.filter(x=>x!==s):[...e.sym,s];saveEntry(e);return rr()}
@@ -742,6 +793,7 @@ async function onClick(ev){
   if('save' in ds){saveEntry(e);await DB.put(e);toast(`День ${dayN(ui.date)} сохранён`);return}
   if(ds.open){ui.date=ds.open;ui.tab='today';render();window.scrollTo(0,0);return}
   if('more' in ds){ui.limit=(ui.limit||60)+60;return rr()}
+  if('snooze' in ds){S.snooze=new Date().toDateString();await saveSettings();return rr()}
   if(ds.period){ui.period=ds.period;return rr()}
   if(ds.chartex){ui.chartEx=ds.chartex;return rr()}
   if(ds.exportp){ui.exportP=ds.exportp;return rr()}
@@ -759,16 +811,21 @@ async function start(){
   $('tabs').innerHTML=TABS.map(([k,l])=>`<button class="tab" role="tab" data-tab="${k}"><svg viewBox="0 0 24 24">${ICONS[k]}</svg>${l}</button>`).join('');
   try{await DB.open();const s=await DB.get('settings');if(s)S={...structuredClone(DEFAULTS),...s,goals:{...DEFAULTS.goals,...(s.goals||{})},sober:{...DEFAULTS.sober,...(s.sober||{})}};for(const e of await DB.all())E.set(e.date,norm(e))}
   catch(err){$('screen').innerHTML=`<div class="card empty">Хранилище недоступно: ${esc(err.message)}. Открой приложение с экрана «Домой», не в режиме частного доступа.</div>`;return}
+  if((S.migr||0)<1){if(!S.causes.includes('Бег')){const i=S.causes.indexOf('Долгая ходьба');S.causes.splice(i>=0?i+1:S.causes.length,0,'Бег')}S.migr=1;await saveSettings()}
+  if((S.migr||0)<2){for(const m of S.meds){if(!m.time)m.time=/вечер/i.test(m.d||'')?'21:00':/обед|день/i.test(m.d||'')?'13:00':'08:00';if(m.dose==null)m.dose=(m.d||'').split('·')[0].trim();delete m.d}
+    for(const e of E.values()){let ch=false;for(const k of Object.keys(e.meds||{})){if(e.meds[k]===true){const mm=S.meds.find(x=>x.id===k);e.meds[k]={st:'taken',dose:mm?.dose||'',plan:mm?.time||''};ch=true}else if(e.meds[k]===false){delete e.meds[k];ch=true}}if(ch)await DB.put(e)}
+    S.migr=2;await saveSettings()}
   applyAccent();
   if(S.pin)await lockScreen();
   urlImport();
   document.addEventListener('click',onClick);
   document.addEventListener('input',onInput);
-  document.addEventListener('change',ev=>{if(ev.target.id==='importFile'&&ev.target.files[0])doImport(ev.target.files[0])});
+  document.addEventListener('change',ev=>{if((ev.target.id==='importFile'||ev.target.id==='importFile2')&&ev.target.files[0])doImport(ev.target.files[0])});
   document.addEventListener('keydown',ev=>{if(ev.key==='Enter'&&ev.target.id==='causeIn'){ev.preventDefault();document.querySelector('[data-causesave]')?.click()}});
+  setInterval(()=>{const hm=nowHM();if(ui.tab==='today'&&hm!==ui.lastHM&&!document.activeElement?.matches('input,textarea')){ui.lastHM=hm;rr()}},20000);
   setInterval(()=>{if(ui.tab==='today'&&!document.activeElement?.matches('input,textarea')){ui.badge++;const b=document.querySelector('[data-badge]');if(b)b.textContent=BADGES()[ui.badge%3]}},5000);
   matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',()=>{applyAccent();rr()});
-  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){const t=todayISO();if(ui.date>t)ui.date=t}});
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){const t=todayISO();if(ui.date>t)ui.date=t;if(ui.tab==='today'){rr();if(ui.awaitPaste)setTimeout(()=>toast('Нажми «Вставить данные»'),300)}}});
   navigator.storage?.persist?.();
   render();
   if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
