@@ -343,6 +343,9 @@ html,body,button,label,.chip{touch-action:manipulation}
 .exin{width:64px;text-align:center;font:inherit;font-weight:700;font-size:16px;color:var(--ink);background:var(--card);border:1.5px solid var(--a1);border-radius:10px;padding:6px 4px}
 .stepset{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);margin-top:6px}
 .stepset input{width:52px;font:inherit;font-size:15px;color:var(--ink);background:var(--card-2);border:1px solid transparent;border-radius:10px;padding:5px 6px;text-align:center}
+:root{--st-deep:#3A3FB8;--st-rem:#4FB6E8;--st-core:#6C8CF0;--st-awake:#F08A5D}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--st-deep:#5D63E6;--st-rem:#7FD0F5;--st-core:#8FA8FF;--st-awake:#FF9F73}}
+:root[data-theme="dark"]{--st-deep:#5D63E6;--st-rem:#7FD0F5;--st-core:#8FA8FF;--st-awake:#FF9F73}
 </style>
 </head>
 <body>
@@ -353,7 +356,7 @@ html,body,button,label,.chip{touch-action:manipulation}
 <script>
 'use strict';
 /* ===== Дневник восстановления · данные хранятся только на этом устройстве (IndexedDB) ===== */
-const APP_VERSION = '2.2';
+const APP_VERSION = '2.3';
 const MON=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 const MONN=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 const WD=['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'], WDS=['вс','пн','вт','ср','чт','пт','сб'];
@@ -368,6 +371,7 @@ const todayISO=()=>iso(new Date());
 const addDays=(s,n)=>iso(new Date(pd(s).getTime()+n*DAY+12*36e5));
 const daysBetween=(a,b)=>Math.round((pd(b)-pd(a))/DAY);
 const fmtSleep=h=>{const m=Math.round(h*60);return `${Math.floor(m/60)} ч ${String(m%60).padStart(2,'0')} мин`};
+const fmtMin=m=>m==null?'—':m>=60?`${Math.floor(m/60)} ч ${String(m%60).padStart(2,'0')} мин`:`${m} мин`;
 const fmtHM=h=>{const m=Math.round(h*60);return `${Math.floor(m/60)}:${String(m%60).padStart(2,'0')}`};
 const fmtSec=s=>s>=60?`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`:`${s} с`;
 const parseNum=v=>{if(v==null||v==='')return null;const n=parseFloat(String(v).replace(',','.').replace(/[^\d.\-]/g,''));return isFinite(n)?n:null};
@@ -501,7 +505,7 @@ function today(){
     ${ui.watchOpen?`<div class="mgrid" style="margin-top:12px">
       ${ui.editHealth?`<label class="m"><span class="k">Сон, ч:мин</span><input class="hin" data-h="sl" inputmode="text" value="${h.sl!=null?fmtHM(h.sl):''}" placeholder="6:49"><span class="d">длительность</span></label>`+tile('sq','Оценка сна',0,'0–100','',h.sq,'numeric'):
        `<div class="m wide"><div class="k">Сон${h.sq!=null?' · оценка '+h.sq:''}${mk('sl')}</div><div class="v num">${h.sl!=null?fmtSleep(h.sl):'—'}${h.bed?`<span>${esc(h.bed)} → ${esc(h.wake||'')}</span>`:''}</div>
-        ${stages?`<div class="stages"><span style="flex:${h.deep||0};background:var(--sleep)"></span><span style="flex:${h.rem||0};background:var(--rec)"></span><span style="flex:${h.core||0};background:var(--ex)"></span><span style="flex:${h.awake||0};background:var(--line)"></span></div><div class="slegend num"><span><i style="background:var(--sleep)"></i>глубокий ${h.deep??'—'} мин</span><span><i style="background:var(--rec)"></i>REM ${h.rem??'—'} мин</span><span><i style="background:var(--ex)"></i>базовый ${h.core??'—'} мин</span><span><i style="background:var(--line)"></i>пробуждения ${h.awake??'—'} мин</span></div>`:''}
+        ${stages?`<div class="stages"><span style="flex:${h.deep||0};background:var(--st-deep)"></span><span style="flex:${h.rem||0};background:var(--st-rem)"></span><span style="flex:${h.core||0};background:var(--st-core)"></span><span style="flex:${h.awake||0};background:var(--st-awake)"></span></div><div class="slegend num"><span><i style="background:var(--st-deep)"></i>глубокий ${fmtMin(h.deep)}</span><span><i style="background:var(--st-rem)"></i>REM ${fmtMin(h.rem)}</span><span><i style="background:var(--st-core)"></i>базовый ${fmtMin(h.core)}</span><span><i style="background:var(--st-awake)"></i>пробуждения ${fmtMin(h.awake)}</span></div>`:''}
         ${h.slNote?`<div class="d">${esc(h.slNote)}</div>`:''}</div>`}
       ${tile('steps','Шаги',h.steps!=null?nf(h.steps):null,'',h.km!=null?dec(h.km)+' км':'',h.steps,'numeric')}
       ${tile('km','Дистанция',h.km!=null?dec(h.km):null,'км','',h.km)}
@@ -832,6 +836,14 @@ async function pasteHealth(){
   if(!/(sl|steps|rhr|w)=/.test(txt)){ui.pasteBox=true;rr();return}
   if(applyParams(new URLSearchParams(txt.slice(txt.indexOf('?')+1).trim()),false))rr();else toast('В буфере нет данных из «Здоровья»');
 }
+function durTok(t){t=String(t).trim().toLowerCase();if(!t)return null;let m=t.match(/^(\d+):(\d{1,2})(?::(\d{1,2}))?$/);if(m)return m[3]!=null?(+m[1])*3600+(+m[2])*60+(+m[3]):(+m[1])*60+(+m[2])*1;
+  if(/[чhмms]/.test(t)){let sec=0,f=false;for(const[re,mul]of[[/(\d+[.,]?\d*)\s*(ч|h)/,3600],[/(\d+[.,]?\d*)\s*(мин|m(?!s))/,60],[/(\d+[.,]?\d*)\s*(с|сек|s)\b/,1]]){const x=t.match(re);if(x){sec+=parseFloat(x[1].replace(',','.'))*mul;f=true}}return f?sec:null}
+  const v=parseNum(t);return v==null?null:v}
+function stageOf(v){v=String(v).trim().toLowerCase();if(/awake|бодр/.test(v))return'awake';if(/in ?bed|кроват/.test(v))return'inbed';if(/deep|глубок/.test(v))return'deep';if(/rem|быстр/.test(v))return'rem';if(/core|базов|asleep|unspec|сон/.test(v))return'core';return null}
+function parseStages(str){const [a,b]=String(str).split('|');if(!a||!b)return null;const sp=x=>x.split(/[;\n]/).map(y=>y.trim()).filter(Boolean);const ph=sp(a),du=sp(b).map(durTok);if(!ph.length||ph.length!==du.length)return null;
+  let numOnly=sp(b).every(x=>/^\d+([.,]\d+)?$/.test(x)),tot=du.reduce((s,x)=>s+(x||0),0);const k=numOnly&&tot<1500?60:1;const acc={deep:0,rem:0,core:0,awake:0,inbed:0};
+  ph.forEach((p,i)=>{const st=stageOf(p);if(st&&du[i]!=null)acc[st]+=du[i]*k});const sleep=acc.deep+acc.rem+acc.core;if(!sleep)return null;
+  return{sl:Math.round(sleep/36)/100,deep:Math.round(acc.deep/60),rem:Math.round(acc.rem/60),core:Math.round(acc.core/60),awake:Math.round(acc.awake/60)}}
 function applyParams(p,fromUrl,silent){
   const date=p.get('d')||(fromUrl?todayISO():ui.date);const e=norm(entry(date));const h=e.health;let n=0;
   const man=h.manual||{};const set=(k,v)=>{if(v!=null&&!isNaN(v)&&!man[k]){h[k]=v;n++}};
@@ -839,6 +851,7 @@ function applyParams(p,fromUrl,silent){
   for(const k of['sq','deep','rem','core','awake','rhr','hrv','kcal','exmin','stand','steps'])set(k,p.has(k)?rn(p.get(k),1):null);
   for(const k of['km','w','resp','wtemp'])set(k,p.has(k)?rn(p.get(k),100):null);
   {const sy=parseNum(p.get('bps')),di=parseNum(p.get('bpd'));if(sy&&di){e.bp=(e.bp||[]).filter(r=>r.src!=='Здоровье');e.bp.push({sys:Math.round(sy),dia:Math.round(di),t:'',src:'Здоровье'});n++}}
+  if(p.get('sl2')){const r=parseStages(p.get('sl2'));if(r){for(const k of['deep','rem','core','awake'])if(!man[k])h[k]=r[k];if(!man.sl){h.sl=r.sl;n++}}}
   if(p.get('bed'))h.bed=p.get('bed');if(p.get('wake'))h.wake=p.get('wake');
   if(p.get('wk')){e.workouts=e.workouts.filter(w=>w.src!=='Здоровье');for(const s of p.get('wk').split(';')){const[type,dist,time]=s.split('|');if(!type)continue;const k=wkType(type);e.workouts.push({type:k,t:k==='other'?type.trim():WK[k][0],dist:dist||'',time:time||'',src:'Здоровье'})}n++}
   if(n){h.src='Команда · '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});saveEntry(e);if(!silent){ui.date=date;setTimeout(()=>toast('Данные из «Здоровья» добавлены'),300)}}
