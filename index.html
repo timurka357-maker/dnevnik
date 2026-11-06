@@ -356,7 +356,7 @@ html,body,button,label,.chip{touch-action:manipulation}
 <script>
 'use strict';
 /* ===== Дневник восстановления · данные хранятся только на этом устройстве (IndexedDB) ===== */
-const APP_VERSION = '2.3';
+const APP_VERSION = '2.4';
 const MON=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 const MONN=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 const WD=['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'], WDS=['вс','пн','вт','ср','чт','пт','сб'];
@@ -844,8 +844,12 @@ function parseStages(str){const [a,b]=String(str).split('|');if(!a||!b)return nu
   let numOnly=sp(b).every(x=>/^\d+([.,]\d+)?$/.test(x)),tot=du.reduce((s,x)=>s+(x||0),0);const k=numOnly&&tot<1500?60:1;const acc={deep:0,rem:0,core:0,awake:0,inbed:0};
   ph.forEach((p,i)=>{const st=stageOf(p);if(st&&du[i]!=null)acc[st]+=du[i]*k});const sleep=acc.deep+acc.rem+acc.core;if(!sleep)return null;
   return{sl:Math.round(sleep/36)/100,deep:Math.round(acc.deep/60),rem:Math.round(acc.rem/60),core:Math.round(acc.core/60),awake:Math.round(acc.awake/60)}}
+function parseDay(v){if(!v)return null;v=String(v).trim().toLowerCase();let m=v.match(/(\d{4})-(\d{2})-(\d{2})/);if(m)return m[0];
+  m=v.match(/(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})/);if(m)return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  const M=['янв','фев','мар','апр','ма','июн','июл','авг','сен','окт','ноя','дек'];m=v.match(/(\d{1,2})\s+([а-яё]+)\.?\s+(\d{4})/);
+  if(m){const w=m[2];let k=M.findIndex((x,i)=>i!==4&&w.startsWith(x));if(k<0&&/^ма[йя]/.test(w))k=4;if(k>=0)return `${m[3]}-${String(k+1).padStart(2,'0')}-${m[1].padStart(2,'0')}`}return null}
 function applyParams(p,fromUrl,silent){
-  const date=p.get('d')||(fromUrl?todayISO():ui.date);const e=norm(entry(date));const h=e.health;let n=0;
+  const dd=parseDay(p.get('d'));const date=dd||(fromUrl?todayISO():ui.date);const e=norm(entry(date));const h=e.health;let n=0;
   const man=h.manual||{};const set=(k,v)=>{if(v!=null&&!isNaN(v)&&!man[k]){h[k]=v;n++}};
   {let v=parseSleep(p.get('sl'));if(v!=null){if(v>1440)v=v/3600;else if(v>24)v=v/60;set('sl',Math.round(v*1000)/1000)}}const rn=(v,m)=>{const x=parseNum(v);return x==null?null:Math.round(x*m)/m};
   for(const k of['sq','deep','rem','core','awake','rhr','hrv','kcal','exmin','stand','steps'])set(k,p.has(k)?rn(p.get(k),1):null);
@@ -854,7 +858,7 @@ function applyParams(p,fromUrl,silent){
   if(p.get('sl2')){const r=parseStages(p.get('sl2'));if(r){for(const k of['deep','rem','core','awake'])if(!man[k])h[k]=r[k];if(!man.sl){h.sl=r.sl;n++}}}
   if(p.get('bed'))h.bed=p.get('bed');if(p.get('wake'))h.wake=p.get('wake');
   if(p.get('wk')){e.workouts=e.workouts.filter(w=>w.src!=='Здоровье');for(const s of p.get('wk').split(';')){const[type,dist,time]=s.split('|');if(!type)continue;const k=wkType(type);e.workouts.push({type:k,t:k==='other'?type.trim():WK[k][0],dist:dist||'',time:time||'',src:'Здоровье'})}n++}
-  if(n){h.src='Команда · '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});saveEntry(e);if(!silent){ui.date=date;setTimeout(()=>toast('Данные из «Здоровья» добавлены'),300)}}
+  if(n){h.src='Команда · '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});saveEntry(e);if(!silent){const moved=dd&&dd!==ui.date;ui.date=date;const dt=pd(date);setTimeout(()=>toast(moved?`Данные за ${dt.getDate()} ${MON[dt.getMonth()]} записаны в свой день`:dd?`Данные за ${dt.getDate()} ${MON[dt.getMonth()]} добавлены`:'Данные добавлены. В строке нет даты: добавь &d= в Команду'),300)}}
   return n;
 }
 
@@ -883,7 +887,7 @@ function onInput(ev){
   else if(id==='waist'){e.waist=parseNum(t.value);saveEntry(e)}
   else if(id==='temp'){e.temp=t.value;saveEntry(e)}
   else if(id==='search'){ui.q=t.value;clearTimeout(onInput.t);onInput.t=setTimeout(()=>{render(true);const s=$('search');s.focus();s.setSelectionRange(s.value.length,s.value.length)},250)}
-  else if(t.dataset.h){const k=t.dataset.h;const v=k==='sl'?parseSleep(t.value):parseNum(t.value);e.health.manual??={};if(v==null){delete e.health[k];delete e.health.manual[k]}else{e.health[k]=v;e.health.manual[k]=true}if(!e.health.src)e.health.src='вручную';saveEntry(e)}
+  else if(t.dataset.h){const k=t.dataset.h;const v=k==='sl'?parseSleep(t.value):parseNum(t.value);e.health.manual??={};if(k==='sl'){for(const x of['deep','rem','core','awake'])delete e.health[x]}if(v==null){delete e.health[k];delete e.health.manual[k]}else{e.health[k]=v;e.health.manual[k]=true}if(!e.health.src)e.health.src='вручную';saveEntry(e)}
   else if(t.dataset.exstep){const x=exById(t.dataset.exstep);const v=Math.round(parseNum(t.value)||0);if(v>0){x.step=v;clearTimeout(onInput.es);onInput.es=setTimeout(saveSettings,300)}}
   else if(t.dataset.medf){const m=S.meds.find(x=>x.id===t.dataset.id);if(m){m[t.dataset.medf]=t.value;clearTimeout(onInput.ms);onInput.ms=setTimeout(saveSettings,300)}}
   else if(t.dataset.runm!=null){e.workouts[+t.dataset.runm].runM=parseNum(t.value);saveEntry(e)}
