@@ -356,7 +356,7 @@ html,body,button,label,.chip{touch-action:manipulation}
 <script>
 'use strict';
 /* ===== Дневник восстановления · данные хранятся только на этом устройстве (IndexedDB) ===== */
-const APP_VERSION = '2.4';
+const APP_VERSION = '2.5';
 const MON=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 const MONN=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 const WD=['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'], WDS=['вс','пн','вт','ср','чт','пт','сб'];
@@ -840,8 +840,11 @@ function durTok(t){t=String(t).trim().toLowerCase();if(!t)return null;let m=t.ma
   if(/[чhмms]/.test(t)){let sec=0,f=false;for(const[re,mul]of[[/(\d+[.,]?\d*)\s*(ч|h)/,3600],[/(\d+[.,]?\d*)\s*(мин|m(?!s))/,60],[/(\d+[.,]?\d*)\s*(с|сек|s)\b/,1]]){const x=t.match(re);if(x){sec+=parseFloat(x[1].replace(',','.'))*mul;f=true}}return f?sec:null}
   const v=parseNum(t);return v==null?null:v}
 function stageOf(v){v=String(v).trim().toLowerCase();if(/awake|бодр/.test(v))return'awake';if(/in ?bed|кроват/.test(v))return'inbed';if(/deep|глубок/.test(v))return'deep';if(/rem|быстр/.test(v))return'rem';if(/core|базов|asleep|unspec|сон/.test(v))return'core';return null}
-function parseStages(str){const [a,b]=String(str).split('|');if(!a||!b)return null;const sp=x=>x.split(/[;\n]/).map(y=>y.trim()).filter(Boolean);const ph=sp(a),du=sp(b).map(durTok);if(!ph.length||ph.length!==du.length)return null;
-  let numOnly=sp(b).every(x=>/^\d+([.,]\d+)?$/.test(x)),tot=du.reduce((s,x)=>s+(x||0),0);const k=numOnly&&tot<1500?60:1;const acc={deep:0,rem:0,core:0,awake:0,inbed:0};
+function parseDT(v){const d=parseDay(v);if(!d)return null;const m=String(v).match(/(\d{1,2}):(\d{2})(?::\d{2})?\s*(am|pm|ам|пм)?/i);let hh=m?+m[1]:0;const mm=m?+m[2]:0;if(m&&m[3]){const pmm=/p|п/i.test(m[3]);if(pmm&&hh<12)hh+=12;if(!pmm&&hh===12)hh=0}const x=pd(d);x.setHours(hh,mm,0,0);return x.getTime()}
+function parseStages(str,target){const [a,b,c]=String(str).split('|');if(!a||!b)return null;const sp=x=>x.split(/[;\n]/).map(y=>y.trim()).filter(Boolean);let ph=sp(a),durRaw=sp(b);let du=durRaw.map(durTok);if(!ph.length||ph.length!==du.length)return null;
+  if(c&&target){const st=sp(c).map(parseDT);if(st.length===ph.length){const t0=pd(addDays(target,-1)).getTime()+18*36e5,t1=pd(target).getTime()+12*36e5;const keep=st.map(x=>x!=null&&x>=t0&&x<t1);ph=ph.filter((_,i)=>keep[i]);durRaw=durRaw.filter((_,i)=>keep[i]);du=du.filter((_,i)=>keep[i]);if(!ph.length)return{none:true}}}
+  const b2=durRaw;
+  let numOnly=b2.every(x=>/^\d+([.,]\d+)?$/.test(x)),tot=du.reduce((s,x)=>s+(x||0),0);const k=numOnly&&tot<1500?60:1;const acc={deep:0,rem:0,core:0,awake:0,inbed:0};
   ph.forEach((p,i)=>{const st=stageOf(p);if(st&&du[i]!=null)acc[st]+=du[i]*k});const sleep=acc.deep+acc.rem+acc.core;if(!sleep)return null;
   return{sl:Math.round(sleep/36)/100,deep:Math.round(acc.deep/60),rem:Math.round(acc.rem/60),core:Math.round(acc.core/60),awake:Math.round(acc.awake/60)}}
 function parseDay(v){if(!v)return null;v=String(v).trim().toLowerCase();let m=v.match(/(\d{4})-(\d{2})-(\d{2})/);if(m)return m[0];
@@ -855,7 +858,7 @@ function applyParams(p,fromUrl,silent){
   for(const k of['sq','deep','rem','core','awake','rhr','hrv','kcal','exmin','stand','steps'])set(k,p.has(k)?rn(p.get(k),1):null);
   for(const k of['km','w','resp','wtemp'])set(k,p.has(k)?rn(p.get(k),100):null);
   {const sy=parseNum(p.get('bps')),di=parseNum(p.get('bpd'));if(sy&&di){e.bp=(e.bp||[]).filter(r=>r.src!=='Здоровье');e.bp.push({sys:Math.round(sy),dia:Math.round(di),t:'',src:'Здоровье'});n++}}
-  if(p.get('sl2')){const r=parseStages(p.get('sl2'));if(r){for(const k of['deep','rem','core','awake'])if(!man[k])h[k]=r[k];if(!man.sl){h.sl=r.sl;n++}}}
+  if(p.get('sl2')){const r=parseStages(p.get('sl2'),date);if(r?.none){setTimeout(()=>toast('Сна за эту ночь не найдено'),600)}else if(r){for(const k of['deep','rem','core','awake'])if(!man[k])h[k]=r[k];if(!man.sl){h.sl=r.sl;n++}}}
   if(p.get('bed'))h.bed=p.get('bed');if(p.get('wake'))h.wake=p.get('wake');
   if(p.get('wk')){e.workouts=e.workouts.filter(w=>w.src!=='Здоровье');for(const s of p.get('wk').split(';')){const[type,dist,time]=s.split('|');if(!type)continue;const k=wkType(type);e.workouts.push({type:k,t:k==='other'?type.trim():WK[k][0],dist:dist||'',time:time||'',src:'Здоровье'})}n++}
   if(n){h.src='Команда · '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});saveEntry(e);if(!silent){const moved=dd&&dd!==ui.date;ui.date=date;const dt=pd(date);setTimeout(()=>toast(moved?`Данные за ${dt.getDate()} ${MON[dt.getMonth()]} записаны в свой день`:dd?`Данные за ${dt.getDate()} ${MON[dt.getMonth()]} добавлены`:'Данные добавлены. В строке нет даты: добавь &d= в Команду'),300)}}
