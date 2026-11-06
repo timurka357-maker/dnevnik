@@ -363,7 +363,7 @@ input[type=time].medtime{display:inline-block;vertical-align:baseline;font:inher
 <script>
 'use strict';
 /* ===== Дневник восстановления · данные хранятся только на этом устройстве (IndexedDB) ===== */
-const APP_VERSION = '2.7';
+const APP_VERSION = '2.8';
 const MON=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 const MONN=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 const WD=['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'], WDS=['вс','пн','вт','ср','чт','пт','сб'];
@@ -859,10 +859,11 @@ function urlImport(){
   const p=new URLSearchParams(location.search);if(![...p.keys()].length)return;
   applyParams(p,true);history.replaceState(null,'',location.pathname);
 }
+function clearClip(){try{navigator.clipboard?.writeText(' ').catch(()=>{})}catch(_){}}
 async function pasteHealth(){
   let txt='';try{txt=await navigator.clipboard.readText()}catch(_){}
   if(!/(sl|steps|rhr|w)=/.test(txt)){ui.pasteBox=true;rr();return}
-  if(applyParams(new URLSearchParams(txt.slice(txt.indexOf('?')+1).trim()),false))rr();else toast('В буфере нет данных из «Здоровья»');
+  if(applyParams(new URLSearchParams(txt.slice(txt.indexOf('?')+1).trim()),false)){clearClip();rr()}else toast('В буфере нет данных из «Здоровья»');
 }
 function durTok(t){t=String(t).trim().toLowerCase();if(!t)return null;let m=t.match(/^(\d+):(\d{1,2})(?::(\d{1,2}))?$/);if(m)return m[3]!=null?(+m[1])*3600+(+m[2])*60+(+m[3]):(+m[1])*60+(+m[2])*1;
   if(/[чhмms]/.test(t)){let sec=0,f=false;for(const[re,mul]of[[/(\d+[.,]?\d*)\s*(ч|h)/,3600],[/(\d+[.,]?\d*)\s*(мин|m(?!s))/,60],[/(\d+[.,]?\d*)\s*(с|сек|s)\b/,1]]){const x=t.match(re);if(x){sec+=parseFloat(x[1].replace(',','.'))*mul;f=true}}return f?sec:null}
@@ -939,7 +940,7 @@ async function onClick(ev){
   if('watch' in ds){ui.watchOpen=!ui.watchOpen;if(!ui.watchOpen)ui.editHealth=false;return rr()}
   if(ds.runsc){const name=ds.runsc==='sleep'?'Записать сон':'Записать день';ui.awaitPaste=true;rr();location.href=`shortcuts://run-shortcut?name=${encodeURIComponent(name)}&input=text&text=${ui.date}`;return}
   if('pastehealth' in ds){ui.awaitPaste=false;return pasteHealth()}
-  if('pasteok' in ds){const v=$('pasteIn').value;ui.pasteBox=false;if(!applyParams(new URLSearchParams(v.slice(v.indexOf('?')+1).trim()),false))toast('Не нашёл данных в тексте');return rr()}
+  if('pasteok' in ds){const v=$('pasteIn').value;ui.pasteBox=false;if(!applyParams(new URLSearchParams(v.slice(v.indexOf('?')+1).trim()),false))toast('Не нашёл данных в тексте');else clearClip();return rr()}
   if('edithealth' in ds){ui.editHealth=!ui.editHealth;return rr()}
   if(ds.scale){const v=+ds.v;e[ds.scale]=e[ds.scale]===v?null:v;saveEntry(e);return rr()}
   if(ds.cause){const c=ds.cause;e.causes=e.causes.includes(c)?e.causes.filter(x=>x!==c):[...e.causes,c];if(c==='Руль'&&e.drive==null)e.drive=1;saveEntry(e);return rr()}
@@ -1028,7 +1029,7 @@ async function start(){
   document.addEventListener('touchstart',ev=>{const h=ev.target.closest('#hero');if(!h||ev.touches.length!==1){sx=null;return}sx=ev.touches[0].clientX;sy=ev.touches[0].clientY},{passive:true});
   document.addEventListener('touchend',ev=>{if(sx==null)return;const dx=ev.changedTouches[0].clientX-sx,dy=ev.changedTouches[0].clientY-sy;sx=null;if(Math.abs(dx)<60||Math.abs(dy)>Math.abs(dx))return;const nd=addDays(ui.date,dx>0?-1:1);if(nd<=todayISO()){ui.date=nd;render()}},{passive:true});
   document.addEventListener('input',onInput);
-  document.addEventListener('paste',ev=>{if(ev.target.id!=='pasteIn')return;const v=(ev.clipboardData||window.clipboardData)?.getData('text')||'';if(!v)return;ev.preventDefault();ui.pasteBox=false;if(!applyParams(new URLSearchParams(v.slice(v.indexOf('?')+1).trim()),false))toast('Не нашёл данных в тексте');rr()});
+  document.addEventListener('paste',ev=>{if(ev.target.id!=='pasteIn')return;const v=(ev.clipboardData||window.clipboardData)?.getData('text')||'';if(!v)return;ev.preventDefault();ui.pasteBox=false;if(!applyParams(new URLSearchParams(v.slice(v.indexOf('?')+1).trim()),false))toast('Не нашёл данных в тексте');else clearClip();rr()});
   document.addEventListener('focusout',ev=>{if(ev.target.id==='exIn')commitEx(ev.target)});
   document.addEventListener('change',ev=>{if((ev.target.id==='importFile'||ev.target.id==='importFile2')&&ev.target.files[0])doImport(ev.target.files[0])});
   document.addEventListener('keydown',ev=>{if(ev.key==='Enter'&&ev.target.id==='exIn'){ev.preventDefault();ev.target.blur()}if(ev.key==='Enter'&&ev.target.id==='causeIn'){ev.preventDefault();document.querySelector('[data-causesave]')?.click()}if(ev.key==='Enter'&&ev.target.id==='emoIn'){ev.preventDefault();document.querySelector('[data-emosave]')?.click()}});
