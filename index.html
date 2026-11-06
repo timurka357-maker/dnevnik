@@ -337,6 +337,12 @@ html,body,button,label,.chip{touch-action:manipulation}
 .thermo.ok b{color:var(--goal)}
 :root[data-accent="multi"]{--c-bp:#E5484D}
 [data-accent="multi"] .card[data-sec="bp"]{--sc:var(--c-bp)}
+
+.exval{min-width:58px;text-align:center;font:inherit;font-weight:700;font-size:16px;color:var(--ink);background:transparent;border:0;border-bottom:1.5px dashed var(--line);padding:4px 2px;cursor:pointer}
+.exval.rec{color:var(--a1)}
+.exin{width:64px;text-align:center;font:inherit;font-weight:700;font-size:16px;color:var(--ink);background:var(--card);border:1.5px solid var(--a1);border-radius:10px;padding:6px 4px}
+.stepset{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);margin-top:6px}
+.stepset input{width:52px;font:inherit;font-size:15px;color:var(--ink);background:var(--card-2);border:1px solid transparent;border-radius:10px;padding:5px 6px;text-align:center}
 </style>
 </head>
 <body>
@@ -389,7 +395,7 @@ const DEFAULTS={
     {id:'plank',n:'Планка',u:'s',step:5,active:true},{id:'hang',n:'Вис на турнике',u:'s',step:5,active:true},
     {id:'squat',n:'Приседания',u:'n',step:5,active:true},{id:'push',n:'Отжимания',u:'n',step:1,active:true},
     {id:'pushk',n:'Отжимания с колен',u:'n',step:1,active:false,deleted:true},
-    {id:'kb_swing',n:'Гиря, мах',u:'n',step:5,kg:6,active:true},{id:'kb_lift',n:'Гиря, подъём на руку',u:'n',step:1,kg:6,active:true},
+    {id:'kb_swing',n:'Гиря, мах',u:'n',step:5,kg:6,active:true},{id:'kb_lift',n:'Гиря, подъём на руку',u:'n',step:5,kg:6,active:true},
     {id:'abs',n:'Пресс',u:'n',step:5,active:false}],
   causes:['Руль','Работа руками','Гиря, турник','Гребля','Долгая ходьба','Бег','Недосып','Холод','Простуда','Болезнь','Не знаю'],
   dayTypes:['Рабочий день','Выходной','Командировка','Дорога','Природа, поход','Рыбалка','Праздник','Баня'],
@@ -529,9 +535,9 @@ function today(){
   </section>`;
   const exList=S.exercises.filter(x=>(x.active&&!x.deleted)||e.ex[x.id]);
   const exRows=exList.map(x=>{const cur=e.ex[x.id]||{};const kg=cur.kg??x.kg;const {last,best}=exHistory(x.id,d,kg);const v=cur.v||0;const rec=v&&best&&v>best;
-    return `<div class="row"><div><div class="t">${esc(x.n)}${kg!=null?`<button class="kg" data-kg="${x.id}">${dec(kg)} кг</button>`:''}${rec?'<span class="badge">рекорд</span>':''}</div><div class="s num">${last?`прошлый ${fmtEx(x,last.v)}`:'ещё не было'}${best?` · лучший ${fmtEx(x,best)}`:''}</div></div><div class="step"><button data-ex="${x.id}" data-d="-1" aria-label="Меньше">−</button><output class="num ${rec?'rec':''}">${v?fmtEx(x,v):'—'}</output><button data-ex="${x.id}" data-d="1" aria-label="Больше">+</button></div></div>
+    return `<div class="row"><div><div class="t">${esc(x.n)}${kg!=null?`<button class="kg" data-kg="${x.id}">${dec(kg)} кг</button>`:''}${rec?'<span class="badge">рекорд</span>':''}</div><div class="s num">${last?`прошлый ${fmtEx(x,last.v)}`:'ещё не было'}${best?` · лучший ${fmtEx(x,best)}`:''}</div></div><div class="step"><button data-ex="${x.id}" data-d="-1" aria-label="Меньше">−</button>${ui.exEdit===x.id?`<input class="exin num" id="exIn" data-exin="${x.id}" inputmode="${x.u==='s'?'text':'numeric'}" value="${v?fmtEx(x,v).replace(' с',''):''}" placeholder="${x.u==='s'?'1:30':'0'}" enterkeyhint="done">`:`<button class="exval num ${rec?'rec':''}" data-exedit="${x.id}" aria-label="Вписать вручную">${v?fmtEx(x,v):'—'}</button>`}<button data-ex="${x.id}" data-d="1" aria-label="Больше">+</button></div></div>
     ${ui.kgOpen[x.id]?`<div class="row" style="border-top:0;padding-top:0"><div class="s">Вес снаряда. Рекорды считаются отдельно для каждого веса.</div><div class="step"><button data-kgd="${x.id}" data-d="-1" aria-label="Легче">−</button><output class="num">${dec(kg)} кг</output><button data-kgd="${x.id}" data-d="1" aria-label="Тяжелее">+</button></div></div>`:''}`}).join('');
-  const train=`<section class="card" data-sec="train"><div class="ch">${h2('Тренировки')}<span class="aside">нажми на вес, чтобы сменить</span></div>
+  const train=`<section class="card" data-sec="train"><div class="ch">${h2('Тренировки')}<span class="aside">нажми на число, чтобы вписать</span></div>
     <div class="lbl" style="margin-bottom:8px">Зарядка</div>
     <div class="seg">${['сделана','частично','пропущена'].map(s=>`<button data-charge="${s}" aria-pressed="${e.charge===s}">${s}</button>`).join('')}</div>
     <div style="margin-top:6px">${exRows}</div>
@@ -743,7 +749,7 @@ function manage(m){
     <div class="lbl" style="margin:14px 0 6px">Новый препарат</div>
     <div class="form"><input type="text" class="full" id="medName" placeholder="Название"><input type="text" id="medDose" placeholder="Доза"><input type="time" id="medTime" value="08:00" aria-label="Время"><button class="btn sm full" data-medsave>Добавить</button></div>
     <div class="sub" style="margin-top:8px">Изменения сохраняются сразу. Новая доза и время действуют с сегодняшнего дня, в прошлых днях остаётся как было. «Убрать из приёма» скрывает препарат из дня, история остаётся. «Удалить» убирает его совсем.</div></section>`;
-  if(m==='ex')return back+`<div class="h1">Упражнения</div><section class="card">${S.exercises.filter(x=>!x.deleted).map(x=>`<div class="row"><div><div class="t">${esc(x.n)}</div><div class="s">${x.u==='s'?'секунды':'раз'}${x.kg!=null?' · '+dec(x.kg)+' кг':''}${x.active?'':' · скрыто'}</div></div><div class="medact" style="margin:0;flex:none">${ui.delEx===x.id?`<button class="mbtn danger" data-exdel="${x.id}">Точно удалить</button><button class="mbtn ghost" data-delcancel>Отмена</button>`:`<button class="linkbtn danger" data-exdelask="${x.id}">Удалить</button><button class="tog" data-exact="${x.id}" aria-pressed="${x.active}" aria-label="Показывать"></button>`}</div></div>`).join('')}
+  if(m==='ex')return back+`<div class="h1">Упражнения</div><section class="card">${S.exercises.filter(x=>!x.deleted).map(x=>`<div class="row"><div><div class="t">${esc(x.n)}</div><div class="s">${x.u==='s'?'секунды':'раз'}${x.kg!=null?' · '+dec(x.kg)+' кг':''}${x.active?'':' · скрыто'}</div><label class="stepset">шаг ±<input type="text" inputmode="numeric" data-exstep="${x.id}" value="${x.step}" aria-label="Шаг для ${esc(x.n)}"></label></div><div class="medact" style="margin:0;flex:none">${ui.delEx===x.id?`<button class="mbtn danger" data-exdel="${x.id}">Точно удалить</button><button class="mbtn ghost" data-delcancel>Отмена</button>`:`<button class="linkbtn danger" data-exdelask="${x.id}">Удалить</button><button class="tog" data-exact="${x.id}" aria-pressed="${x.active}" aria-label="Показывать"></button>`}</div></div>`).join('')}
     <div class="form"><input type="text" class="full" id="exName" placeholder="Новое упражнение"><div class="seg full">${['раз','секунды'].map(u=>`<button data-exu="${u}" aria-pressed="${ui.exU===u}">${u}</button>`).join('')}</div><input type="text" class="full" inputmode="decimal" id="exKg" placeholder="Вес, кг (если есть)"><button class="btn sm full" data-exsave>Добавить</button></div></section>`;
   if(m==='days')return back+`<div class="h1">Какой был день</div><section class="card">${S.dayTypes.map((c,i)=>`<div class="row"><div class="t">${esc(c)}</div><button class="del" data-deldt="${i}" aria-label="Убрать">×</button></div>`).join('')}
     <div class="inline"><input type="text" id="dtIn" placeholder="Например: Спортзал"><button class="btn sm" data-dtsave style="width:auto">Добавить</button></div><div class="sub" style="margin-top:8px">Удаление убирает вариант из списка, старые записи не меняются.</div></section>`;
@@ -804,23 +810,15 @@ async function doExport(kind){
   else ok=await shareFile(`Дневник копия ${stamp}.json`,JSON.stringify({app:'dnevnik',version:1,kind:'backup',exported:new Date().toISOString(),settings:S,entries:l},null,1),'application/json');
   if(ok){S.lastExport=Date.now();await saveSettings();render()}
 }
-/* Дополняет уже существующий день только пустыми полями из файла. Ничего не перезаписывает. */
-function fillGaps(cur,inc){let ch=false;
-  if(!cur.note&&inc.note){cur.note=inc.note;ch=true}
-  for(const k in inc.health)if(cur.health[k]==null&&inc.health[k]!=null){cur.health[k]=inc.health[k];ch=true}
-  for(const k in inc.ex)if(!cur.ex[k]&&inc.ex[k]){cur.ex[k]=inc.ex[k];ch=true}
-  if(!cur.workouts.length&&inc.workouts.length){cur.workouts=inc.workouts;ch=true}
-  for(const k of ['stool','stoolNote','waist','medsNote','medsOk'])if((cur[k]==null||cur[k]==='')&&inc[k]!=null&&inc[k]!==''){cur[k]=inc[k];ch=true}
-  return ch}
 async function doImport(file){
   try{const txt=await file.text();
     if(!txt.trim().startsWith('{')){let days=new Set();for(const line of txt.split(/\r?\n/)){const q=line.slice(line.indexOf('?')+1).trim();if(!/(^|&)d=\d{4}-\d\d-\d\d/.test(q))continue;const p=new URLSearchParams(q);if(applyParams(p,false,true))days.add(p.get('d'))}
       if(!days.size)throw new Error('В файле нет данных из «Здоровья»');toast(`Данные из «Здоровья» добавлены за ${days.size} ${plural(days.size,'день','дня','дней')}`);render();return}
     const data=JSON.parse(txt);if(data.app!=='dnevnik'||!Array.isArray(data.entries))throw new Error('Это не файл дневника');
     const wasEmpty=![...E.values()].some(hasContent);
-    let add=0,skip=0,fill=0;for(const e of data.entries){if(!e.date||!/^\d{4}-\d\d-\d\d$/.test(e.date))continue;const cur=E.get(e.date);if(hasContent(cur)){if(fillGaps(norm(cur),norm(structuredClone(e)))){await DB.put(cur);fill++}else skip++;continue}const n=norm(e);E.set(n.date,n);await DB.put(n);add++}
+    let add=0,skip=0;for(const e of data.entries){if(!e.date||!/^\d{4}-\d\d-\d\d$/.test(e.date))continue;if(hasContent(E.get(e.date))){skip++;continue}const n=norm(e);E.set(n.date,n);await DB.put(n);add++}
     if(data.kind==='backup'&&wasEmpty&&data.settings&&Array.isArray(data.settings.exercises)){S={...structuredClone(DEFAULTS),...data.settings};await saveSettings();applyAccent()}
-    toast(`Загружено ${add} ${plural(add,'запись','записи','записей')}${fill?`, дополнено ${fill}`:''}${skip?`, пропущено ${skip}: эти дни уже есть`:''}`);render();
+    toast(`Загружено ${add} ${plural(add,'запись','записи','записей')}${skip?`, пропущено ${skip}: эти дни уже есть`:''}`);render();
   }catch(err){toast('Не получилось загрузить: '+err.message)}
 }
 
@@ -872,9 +870,13 @@ function onInput(ev){
   else if(id==='temp'){e.temp=t.value;saveEntry(e)}
   else if(id==='search'){ui.q=t.value;clearTimeout(onInput.t);onInput.t=setTimeout(()=>{render(true);const s=$('search');s.focus();s.setSelectionRange(s.value.length,s.value.length)},250)}
   else if(t.dataset.h){const k=t.dataset.h;const v=k==='sl'?parseSleep(t.value):parseNum(t.value);e.health.manual??={};if(v==null){delete e.health[k];delete e.health.manual[k]}else{e.health[k]=v;e.health.manual[k]=true}if(!e.health.src)e.health.src='вручную';saveEntry(e)}
+  else if(t.dataset.exstep){const x=exById(t.dataset.exstep);const v=Math.round(parseNum(t.value)||0);if(v>0){x.step=v;clearTimeout(onInput.es);onInput.es=setTimeout(saveSettings,300)}}
   else if(t.dataset.medf){const m=S.meds.find(x=>x.id===t.dataset.id);if(m){m[t.dataset.medf]=t.value;clearTimeout(onInput.ms);onInput.ms=setTimeout(saveSettings,300)}}
   else if(t.dataset.runm!=null){e.workouts[+t.dataset.runm].runM=parseNum(t.value);saveEntry(e)}
 }
+function commitEx(el){const x=exById(el.dataset.exin);const e=cur();const raw=el.value.trim();let v=null;
+  if(raw){const m=raw.match(/^(\d+)[:.,](\d{1,2})$/);v=x.u==='s'&&m?(+m[1])*60+(+m[2]):Math.round(parseNum(raw)||0)}
+  const c=e.ex[x.id]||{};const kg=c.kg??x.kg;if(v){e.ex[x.id]={v,...(kg!=null?{kg}:{})}}else delete e.ex[x.id];saveEntry(e);ui.exEdit=null;rr()}
 async function onClick(ev){
   const t=ev.target.closest('button');const ds=t?.dataset||{};
   if((ui.delMed||ui.delEx)&&!ds.meddel&&!ds.exdel){ui.delMed=null;ui.delEx=null;rr();if(!t||'delcancel' in ds||ds.meddelask||ds.exdelask)return}
@@ -910,6 +912,7 @@ async function onClick(ev){
   if(ds.ex){const x=exById(ds.ex);const c=e.ex[x.id]||{};const kg=c.kg??x.kg;const {last}=exHistory(x.id,ui.date,kg);let v=c.v||0;
     if(!v&&+ds.d>0)v=last?.v||x.step;else v=Math.max(0,v+ +ds.d*x.step);
     if(v){e.ex[x.id]={v,...(kg!=null?{kg}:{})}}else delete e.ex[x.id];saveEntry(e);return rr()}
+  if(ds.exedit){ui.exEdit=ds.exedit;rr();const el=$('exIn');if(el){el.focus();el.select()}return}
   if(ds.kg){ui.kgOpen[ds.kg]=!ui.kgOpen[ds.kg];return rr()}
   if(ds.kgd){const x=exById(ds.kgd);const c=e.ex[x.id];const kg=Math.max(1,(c?.kg??x.kg)+ +ds.d*2);x.kg=kg;await saveSettings();if(c){c.kg=kg;saveEntry(e)}return rr()}
   if('addex' in ds){ui.addEx=true;return rr()}
@@ -963,6 +966,7 @@ async function start(){
     S.migr=2;await saveSettings()}
   if((S.migr||0)<3){if(!S.causes.includes('Болезнь')){const i=S.causes.indexOf('Простуда');S.causes.splice(i>=0?i+1:S.causes.length,0,'Болезнь')}const pk=S.exercises.find(x=>x.id==='pushk');if(pk){pk.deleted=true;pk.active=false}S.migr=3;await saveSettings()}
   if((S.migr||0)<4){S.causes=S.causes.filter(c=>c!=='Стресс');if(!S.emoWhy)S.emoWhy=[...DEFAULTS.emoWhy];S.migr=4;await saveSettings()}
+  if((S.migr||0)<5){for(const id of ['plank','hang','squat','kb_swing','kb_lift']){const x=S.exercises.find(y=>y.id===id);if(x)x.step=5}S.migr=5;await saveSettings()}
   applyAccent();
   if(S.pin)await lockScreen();
   urlImport();
@@ -971,8 +975,9 @@ async function start(){
   document.addEventListener('touchstart',ev=>{const h=ev.target.closest('#hero');if(!h||ev.touches.length!==1){sx=null;return}sx=ev.touches[0].clientX;sy=ev.touches[0].clientY},{passive:true});
   document.addEventListener('touchend',ev=>{if(sx==null)return;const dx=ev.changedTouches[0].clientX-sx,dy=ev.changedTouches[0].clientY-sy;sx=null;if(Math.abs(dx)<60||Math.abs(dy)>Math.abs(dx))return;const nd=addDays(ui.date,dx>0?-1:1);if(nd<=todayISO()){ui.date=nd;render()}},{passive:true});
   document.addEventListener('input',onInput);
+  document.addEventListener('focusout',ev=>{if(ev.target.id==='exIn')commitEx(ev.target)});
   document.addEventListener('change',ev=>{if((ev.target.id==='importFile'||ev.target.id==='importFile2')&&ev.target.files[0])doImport(ev.target.files[0])});
-  document.addEventListener('keydown',ev=>{if(ev.key==='Enter'&&ev.target.id==='causeIn'){ev.preventDefault();document.querySelector('[data-causesave]')?.click()}if(ev.key==='Enter'&&ev.target.id==='emoIn'){ev.preventDefault();document.querySelector('[data-emosave]')?.click()}});
+  document.addEventListener('keydown',ev=>{if(ev.key==='Enter'&&ev.target.id==='exIn'){ev.preventDefault();ev.target.blur()}if(ev.key==='Enter'&&ev.target.id==='causeIn'){ev.preventDefault();document.querySelector('[data-causesave]')?.click()}if(ev.key==='Enter'&&ev.target.id==='emoIn'){ev.preventDefault();document.querySelector('[data-emosave]')?.click()}});
   setInterval(()=>{const hm=nowHM();if(ui.tab==='today'&&hm!==ui.lastHM&&!document.activeElement?.matches('input,textarea')){ui.lastHM=hm;rr()}},20000);
   matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',()=>{applyAccent();rr()});
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){const t=todayISO();if(ui.date>t)ui.date=t;if(ui.tab==='today'){rr();if(ui.awaitPaste)setTimeout(()=>toast('Нажми «Вставить данные»'),300)}}});
