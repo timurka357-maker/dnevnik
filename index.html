@@ -354,6 +354,22 @@ input[type=time].medtime{display:inline-block;vertical-align:baseline;font:inher
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--st-deep:#5D63E6;--st-rem:#7FD0F5;--st-core:#8FA8FF;--st-awake:#FF9F73}}
 :root[data-theme="dark"]{--st-deep:#5D63E6;--st-rem:#7FD0F5;--st-core:#8FA8FF;--st-awake:#FF9F73}
 
+/* ===== 3.0 ===== */
+.thermo .tt{width:18px;border-radius:9px}
+.thermo .tt i{border-radius:9px;transition:height .4s}
+.thermo.ok .tt i{background:var(--goal)}
+.thermo .tt svg{position:absolute;left:50%;top:5px;width:14px;height:14px;transform:translateX(-50%);fill:none;stroke:#fff;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}
+.thermo span{text-align:center;line-height:1.25;white-space:nowrap}
+.thermo.ok span{color:var(--goal);font-weight:600}
+.sbox{display:flex;gap:12px;align-items:flex-start;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.sscore{position:relative;width:52px;height:52px;flex:none}
+.sscore svg{width:52px;height:52px}
+.sscore b{position:absolute;inset:0;display:grid;place-items:center;font-size:16px;font-weight:700;color:var(--ink)}
+.sinfo{min-width:0;display:flex;flex-direction:column;gap:3px}
+.sinfo .t{font-size:14.5px;font-weight:600;color:var(--ink)}
+.sinfo .s{font-size:12.5px;color:var(--muted)}
+.sparts{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:12.5px;color:var(--muted)}
+.sparts b{color:var(--ink);font-weight:700}
 /* ===== 2.9 · обновлённый стиль ===== */
 .ch .h2{white-space:nowrap}
 .backbtn{align-self:flex-start}
@@ -454,7 +470,7 @@ input[type=time].medtime{display:inline-block;vertical-align:baseline;font:inher
 <script>
 'use strict';
 /* ===== Дневник восстановления · данные хранятся только на этом устройстве (IndexedDB) ===== */
-const APP_VERSION = '2.9';
+const APP_VERSION = '3.1';
 const MON=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 const MONN=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 const WD=['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'], WDS=['вс','пн','вт','ср','чт','пт','сб'];
@@ -544,6 +560,21 @@ const ARM_DEF=['Руль','Работа руками','Гиря, турник','
 const ARM_CAUSES=()=>S.armC||ARM_DEF;
 const DRIVE=()=>S.driveC||'Руль';
 
+/* ---------- оценка сна (своя, по схеме Apple: длительность 50 + режим 30 + пробуждения 20) ---------- */
+const SBAND=s=>s>=96?'превосходно':s>=81?'очень высокая':s>=71?'высокая':s>=51?'нормальная':'низкая';
+function sleepStats(e){const h=e?.health||{};if(!h.sl)return null;const hasSt=h.deep!=null||h.core!=null||h.rem!=null;if(!hasSt)return null;
+  const sm=h.sl*60,aw=h.awin??h.awake??0;const eff=Math.round(sm/(sm+aw)*100);
+  const dur=Math.min(50,50*h.sl/S.goals.sleep);
+  let reg=15,regTxt='нет времени отбоя';
+  if(h.bedm!=null){const hist=[];for(let i=1;i<=14;i++){const x=E.get(addDays(e.date,-i))?.health;if(x?.bedm!=null)hist.push(x.bedm)}
+    if(hist.length>=3){hist.sort((a,b)=>a-b);const med=hist[hist.length>>1];const dev=Math.abs(h.bedm-med);reg=dev<=30?30:dev>=150?0:30*(150-dev)/120;regTxt=dev<=30?'лёг как обычно':`лёг ${h.bedm>med?'позже':'раньше'} обычного на ${fmtMin(dev)}`}
+    else{const dev=Math.max(0,Math.abs(h.bedm-300)-60);reg=dev>=120?0:30*(120-dev)/120;regTxt='сравню с обычным временем, когда накопится 3 ночи'}}
+  const wk=h.wakes??0;const intr=Math.max(0,Math.min(20,20-aw/3-Math.max(0,wk-2)*2));
+  const score=Math.round(dur+reg+intr);return{eff,score,band:SBAND(score),dur:Math.round(dur),reg:Math.round(reg),intr:Math.round(intr),regTxt,aw,wk}}
+function sleepBox(e){const x=sleepStats(e);if(!x)return '';const r=18,c=2*Math.PI*r,p=x.score/100;
+  return `<div class="sbox"><div class="sscore"><svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="${r}" fill="none" stroke="var(--sleep)" stroke-opacity=".16" stroke-width="5"/><circle cx="22" cy="22" r="${r}" fill="none" stroke="var(--sleep)" stroke-width="5" stroke-linecap="round" stroke-dasharray="${(c*p).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 22 22)"/></svg><b class="num">${x.score}</b></div>
+    <div class="sinfo"><div class="t">Оценка сна · ${x.band}</div><div class="s num">эффективность ${x.eff}% · пробуждений ${x.wk}${x.aw?' · '+fmtMin(x.aw):''}</div>
+    <div class="sparts num"><span>длительность <b>${x.dur}</b>/50</span><span>режим <b>${x.reg}</b>/30</span><span>пробуждения <b>${x.intr}</b>/20</span></div><div class="s">${esc(x.regTxt)}</div></div></div>`}
 function ring(val,max,color,label,sub,done){
   const r=34,c=2*Math.PI*r,p=val==null?0:Math.min(val/max,1),ok=done??(val!=null&&val>=max);const col=ok?'var(--goal)':color;
   return `<div class="ring${ok?' ok':''}"><svg viewBox="0 0 84 84" aria-hidden="true"><circle cx="42" cy="42" r="${r}" fill="none" stroke="${col}" stroke-opacity=".16" stroke-width="9"/>${p?`<circle cx="42" cy="42" r="${r}" fill="none" stroke="${col}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${(c*p).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 42 42)"/>`:''}${ok?`<path d="M33 43l6 6 12-13" fill="none" stroke="${col}" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>`:''}</svg><div class="v num">${label}</div><div class="l">${sub}</div></div>`;
@@ -600,8 +631,8 @@ function today(){
     <div class="hero-top"><div class="day num">День ${n}<small>${WD[dt.getDay()]}, ${dt.getDate()} ${MON[dt.getMonth()]}</small></div></div>
     <div class="sober num"><div><b>${alc}</b><span>без алкоголя</span></div><div><b>${smk}</b><span>без сигарет</span></div></div>
     ${weekStrip(d)}
-    <div class="rings">${ring(h.sl,S.goals.sleep,'var(--sleep)',h.sl!=null?fmtHM(h.sl):'—',`сон<br>цель ${fmtHM(S.goals.sleep)}`)}${ring(h.steps,S.goals.steps,'var(--move)',h.steps!=null?nf(h.steps):'—',`шагов<br>${h.km!=null?dec(h.km)+' км':'цель '+nf(S.goals.steps)}`)}${ring(wp==null?null:wp,1,'var(--wt)',lw?dec(lw.v):'—',`вес${lw&&lw.d!==d?' '+pd(lw.d).getDate()+'.'+String(pd(lw.d).getMonth()+1).padStart(2,'0'):''}<br>цель ${dec(S.goals.weight)}`,lw?lw.v<=S.goals.weight:false)}
-      <div class="thermo${h.exmin!=null&&h.exmin>=S.goals.exmin?' ok':''}" aria-label="Упражнения ${h.exmin??0} из ${S.goals.exmin} минут"><div class="tt"><i style="height:${Math.round(exP*100)}%"></i></div><b class="num">${h.exmin??'—'}</b><span>мин</span></div></div>
+    <div class="rings">${ring(h.sl,S.goals.sleep,'var(--sleep)',h.sl!=null?fmtHM(h.sl):'—',`сон${(()=>{const x=sleepStats(e);return x?' · '+x.score:h.sq!=null?' · '+h.sq:''})()}<br>цель ${fmtHM(S.goals.sleep)}`)}${ring(h.steps,S.goals.steps,'var(--move)',h.steps!=null?nf(h.steps):'—',`шагов<br>${h.km!=null?dec(h.km)+' км':'цель '+nf(S.goals.steps)}`)}${ring(wp==null?null:wp,1,'var(--wt)',lw?dec(lw.v):'—',`вес${lw&&lw.d!==d?' '+pd(lw.d).getDate()+'.'+String(pd(lw.d).getMonth()+1).padStart(2,'0'):''}<br>цель ${dec(S.goals.weight)}`,lw?lw.v<=S.goals.weight:false)}
+      <div class="thermo${h.exmin!=null&&h.exmin>=S.goals.exmin?' ok':''}" aria-label="Упражнения ${h.exmin??0} из ${S.goals.exmin} минут"><div class="tt"><i style="height:${Math.round(exP*100)}%"></i>${h.exmin!=null&&h.exmin>=S.goals.exmin?'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12.5l4 4 8-9"/></svg>':''}</div><b class="num">${h.exmin??'—'}</b><span>мин<br>цель ${S.goals.exmin}</span></div></div>
   </section>`;
   const peek=[h.sl!=null&&`сон <b>${fmtHM(h.sl)}${h.sq!=null?' · '+h.sq:''}</b>`,h.rhr!=null&&`пульс <b>${h.rhr}</b>`,h.hrv!=null&&`ВСР <b>${h.hrv}</b>`,h.wt!=null&&`t° <b>${dec(h.wt.toFixed(1))}</b>`,h.w!=null&&`вес <b>${dec(h.w)}</b>`].filter(Boolean);
   const wd=weightWeekDelta(d);
@@ -613,7 +644,7 @@ function today(){
       ${ui.editHealth?`<label class="m"><span class="k">Сон, ч:мин</span><input class="hin" data-h="sl" inputmode="text" value="${h.sl!=null?fmtHM(h.sl):''}" placeholder="6:49"><span class="d">длительность</span></label>`+tile('sq','Оценка сна',0,'0–100','',h.sq,'numeric'):
        `<div class="m wide"><div class="k">Сон${h.sq!=null?' · оценка '+h.sq:''}${mk('sl')}</div><div class="v num">${h.sl!=null?fmtSleep(h.sl):'—'}${h.bed?`<span>${esc(h.bed)} → ${esc(h.wake||'')}</span>`:''}</div>
         ${stages?`<div class="stages"><span style="flex:${h.deep||0};background:var(--st-deep)"></span><span style="flex:${h.rem||0};background:var(--st-rem)"></span><span style="flex:${h.core||0};background:var(--st-core)"></span><span style="flex:${h.awake||0};background:var(--st-awake)"></span></div><div class="slegend num"><span><i style="background:var(--st-deep)"></i>глубокий ${fmtMin(h.deep)}</span><span><i style="background:var(--st-rem)"></i>REM ${fmtMin(h.rem)}</span><span><i style="background:var(--st-core)"></i>базовый ${fmtMin(h.core)}</span><span><i style="background:var(--st-awake)"></i>пробуждения ${fmtMin(h.awake)}</span></div>`:''}
-        ${h.slNote?`<div class="d">${esc(h.slNote)}</div>`:''}</div>`}
+        ${h.slNote?`<div class="d">${esc(h.slNote)}</div>`:''}${sleepBox(e)}</div>`}
       ${tile('steps','Шаги',h.steps!=null?nf(h.steps):null,'',h.km!=null?dec(h.km)+' км':'',h.steps,'numeric')}
       ${tile('km','Дистанция',h.km!=null?dec(h.km):null,'км','',h.km)}
       ${tile('w','Вес утром',h.w!=null?dec(h.w):null,'кг',wd!=null?`${wd>0?'+':'−'}${dec(Math.abs(wd).toFixed(2))} за неделю`:'',h.w)}
@@ -643,7 +674,7 @@ function today(){
     <div class="mood">${MOODS.map(([l,m],i)=>`<button class="m${i+1}" data-mood="${i+1}" aria-pressed="${e.mood===i+1}">${face(m)}${l}</button>`).join('')}</div></section>`;
   const emoC=`<section class="card" data-sec="emo"><div class="ch">${h2('Эмоции')}<span class="aside">нервные моменты за день</span></div>
     <div class="seg emo">${EMO.map((l,i)=>`<button class="e${i}" data-emo="${i}" aria-pressed="${e.emo===i}">${l}</button>`).join('')}</div>
-    ${e.emo>=1?`<div class="lbl" style="margin:14px 0 8px">Из-за чего</div><div class="chips">${[...new Set([...S.emoWhy,...(e.emoWhy||[])])].map(c=>chip('data-emowhy',c,(e.emoWhy||[]).includes(c))).join('')}${ui.addEmo?'':'<button class="chip add-chip" data-addemo>+ своё</button>'}</div>
+    ${e.emo>=1?`<div class="lbl" style="margin:14px 0 8px">Из-за чего</div><div class="chips">${[...new Set([...S.emoWhy,...(e.emoWhy||[])])].map(c=>chip('data-emowhy',c,(e.emoWhy||[]).includes(c))).join('')}${ui.addEmo?'':'<button class="chip add-chip" data-addemo>+ своё</button>'}<button class="chip add-chip" data-manage-go="emo" aria-label="Изменить список причин">✎ список</button></div>
     ${ui.addEmo?`<div class="inline"><input type="text" id="emoIn" placeholder="Например: очередь в поликлинике" enterkeyhint="done"><button class="btn sm" data-emosave style="width:auto">Добавить</button></div>`:''}
     <div class="row" style="padding-bottom:0;margin-top:6px"><div><div class="t">Сдержался</div><div class="s">вовремя остановил себя, не сорвался</div></div><button class="tog" data-held aria-pressed="${!!e.held}" aria-label="Сдержался"></button></div>`:''}
   </section>`;
@@ -660,11 +691,7 @@ function today(){
     <div class="seg">${['сделана','частично','пропущена'].map(s=>`<button data-charge="${s}" aria-pressed="${e.charge===s}">${s}</button>`).join('')}</div>
     <div style="margin-top:6px">${exRows}</div>
     ${ui.addEx?`<div class="form"><input type="text" class="full" id="exName" placeholder="Упражнение: выпады, гантели…"><div class="seg full">${['раз','секунды'].map(u=>`<button data-exu="${u}" aria-pressed="${ui.exU===u}">${u}</button>`).join('')}</div><input type="text" inputmode="decimal" id="exKg" placeholder="Вес, кг (если есть)" class="full"><button class="btn sm full" data-exsave>Добавить упражнение</button></div>`:`<button class="add" data-addex>+ Добавить упражнение</button>`}
-    <div class="divider"></div><div class="lbl" style="margin-bottom:10px">Тренировки за день</div>
-    ${e.workouts.map((w,i)=>`<div class="wk"><div class="ic"><svg viewBox="0 0 24 24">${(WK[w.type]||WK.other)[1]}</svg></div><div class="b"><div class="t">${esc(w.t||(WK[w.type]||WK.other)[0])}</div><div class="s num">${esc([w.dist,w.time,w.pace].filter(Boolean).join(' · ')||w.detail||'')}${w.type==='walk'&&w.run?` · бег ${w.runM||0} м`:''}</div>
-      ${w.type==='walk'&&w.run?`<div class="inline" style="margin-top:6px"><input type="text" inputmode="numeric" data-runm="${i}" value="${w.runM||''}" placeholder="метров бега" style="width:130px"></div>`:''}</div>
-      <div class="x">${w.type==='walk'?`бег<button class="tog" data-run="${i}" aria-pressed="${!!w.run}" aria-label="Был бег"></button>`:esc(w.src||'')}<button class="del" data-delwk="${i}" aria-label="Удалить">×</button></div></div>`).join('')}
-    ${ui.addWk?`<div class="form"><div class="chips full">${WK_TYPES.map(([k,l])=>`<button class="chip" data-wkt="${k}" aria-pressed="${ui.wkT===k}">${l}</button>`).join('')}</div><input type="text" id="wkDist" placeholder="Дистанция: 5 км"><input type="text" id="wkTime" placeholder="Время: 45 мин"><button class="btn sm full" data-wksave>Добавить тренировку</button></div>`:`<button class="add" data-addwk>+ Добавить тренировку</button>`}
+    
   </section>`;
   const meds=S.meds.filter(m=>m.active||e.meds[m.id]!=null).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
   const anyDue=meds.some(m=>medState(e,m,d)==='due');
@@ -702,7 +729,7 @@ function tagsFor(e){const h=e.health||{},t=[];
   if(e.sick)t.push('<span class="tag" style="color:var(--bad)">болел</span>');
   if(e.bp?.length)t.push(`<span class="tag num">давление ${e.bp.map(r=>r.sys+'/'+r.dia).join(', ')}</span>`);
   if(e.emo>=1)t.push(`<span class="tag">эмоции: ${EMO[e.emo]}${e.held?', сдержался':''}</span>`);
-  if(h.sl)t.push(`<span class="tag num">сон ${fmtSleep(h.sl)}${h.sq!=null?' · '+h.sq:''}</span>`);
+  if(h.sl){const x=sleepStats(e);t.push(`<span class="tag num">сон ${fmtSleep(h.sl)}${x?' · оценка '+x.score+' · '+x.eff+'%':h.sq!=null?' · '+h.sq:''}</span>`)}
   if(h.w)t.push(`<span class="tag num">${dec(h.w)} кг</span>`);
   if(h.steps)t.push(`<span class="tag num">${nf(h.steps)} шагов</span>`);
   for(const[id,x]of Object.entries(e.ex||{}))if(x.v){const d=exById(id);t.push(`<span class="tag num">${esc(d.n.toLowerCase())} ${fmtSets(d,x)}${x.kg?' · '+dec(x.kg)+' кг':''}</span>`)}
@@ -867,8 +894,9 @@ function more(){
     ${it('Упражнения',S.exercises.filter(x=>x.active).map(x=>x.n).join(', '),'data-manage="ex"')}
     ${it('Причины слабости',S.causes.length+' вариантов','data-manage="causes"')}
     ${it('Какой был день',S.dayTypes.length+' вариантов','data-manage="days"')}
+    ${it('Причины эмоций',S.emoWhy.join(', '),'data-manage="emo"')}
     ${it('Давление',S.bp?'Блок включён':'Блок выключен','data-manage="bp"')}
-    ${it('Цели',`сон ${fmtHM(S.goals.sleep)} · ${nf(S.goals.steps)} шагов · вес ${dec(S.goals.weight)} кг · t° +${dec(S.goals.wtAlert??0.5)}`,'data-manage="dates"')}
+    ${it('Цели',`сон ${fmtHM(S.goals.sleep)} · ${nf(S.goals.steps)} шагов · ${S.goals.exmin} мин упражнений · вес ${dec(S.goals.weight)} кг · t° +${dec(S.goals.wtAlert??0.5)}`,'data-manage="dates"')}
     ${it('Команда «Записать день»','Как работает кнопка «Загрузить из «Здоровья»»','data-manage="shortcut"')}</section>
   <section class="card"><div class="ch">${h2('Защита')}</div>
     ${it('Вход по PIN-коду',S.pin?'Включён':'Выключен','data-manage="pin"')}
@@ -876,18 +904,19 @@ function more(){
   <section class="card">${ui.confirmWipe?`<div class="t" style="margin-bottom:10px">Удалить все записи и настройки с этого телефона? Это нельзя отменить.</div><div class="form"><button class="btn sm ghost" data-wipe="no">Отмена</button><button class="btn sm danger" data-wipe="yes">Удалить</button></div>`:`<button class="add" style="margin:0;color:var(--bad)" data-wipe="ask">Удалить все данные</button>`}</section>
   <div class="sub" style="text-align:center">Дневник восстановления · версия ${APP_VERSION}</div></div>`;
 }
-const LKEY={causes:['causes','Причины слабости','causeIn','Своя причина','causesave'],days:['dayTypes','Какой был день','dtIn','Например: Спортзал','dtsave']};
+const LKEY={causes:['causes','Причины слабости','causeIn','Своя причина','causesave'],days:['dayTypes','Какой был день','dtIn','Например: Спортзал','dtsave'],emo:['emoWhy','Причины эмоций','lAddIn','Например: Дети','ladd']};
+const LFIELD={causes:'causes',days:'dayType',emo:'emoWhy'};
 function lrow(key,i,name,first,lastI,extra=''){const ed=ui.lEdit===key+':'+i;
   return `<div class="row lrow">${ed?`<input type="text" id="lIn" data-lkey="${key}" data-li="${i}" value="${esc(name)}" enterkeyhint="done" aria-label="Новое название">`:`<button class="lname" data-lren="${key}" data-li="${i}"><span class="t">${esc(name)}</span>${extra}</button>`}
   <div class="lact"><button class="mv" data-lmv="${key}" data-li="${i}" data-d="-1" ${first?'disabled':''} aria-label="Выше">↑</button><button class="mv" data-lmv="${key}" data-li="${i}" data-d="1" ${lastI?'disabled':''} aria-label="Ниже">↓</button></div></div>`}
 function listEditor(m){const[key,title,inId,ph,save]=LKEY[m];const L=S[key];
   return `<button class="backbtn" data-manage="">‹ Ещё</button><div class="h1">${title}</div><section class="card"><div class="sub" style="margin-bottom:4px">Нажми на название, чтобы переименовать. Стрелки меняют порядок на экране «Сегодня».</div>
     ${L.map((c,i)=>{const r=lrow(m,i,c,i===0,i===L.length-1);return ui.delL===m+':'+i?r.replace('<div class="lact">',`<div class="lact"><button class="mbtn danger" data-ldel="${m}" data-li="${i}">Убрать</button><button class="mbtn ghost" data-delcancel>Отмена</button>`):r.replace('</div></div>',`<button class="del" data-ldelask="${m}" data-li="${i}" aria-label="Убрать">×</button></div></div>`)}).join('')}
-    <div class="inline"><input type="text" id="${inId}" placeholder="${ph}" enterkeyhint="done"><button class="btn sm" data-${save} style="width:auto">Добавить</button></div><div class="sub" style="margin-top:8px">Переименование меняет название и в старых записях. Удаление убирает вариант из списка, старые записи не меняются.</div></section>`}
+    <div class="inline"><input type="text" id="${inId}" placeholder="${ph}" enterkeyhint="done"><button class="btn sm" data-${save}${save==='ladd'?`="${m}"`:''} style="width:auto">Добавить</button></div><div class="sub" style="margin-top:8px">Переименование меняет название и в старых записях. Удаление убирает вариант из списка, старые записи не меняются.</div></section>`}
 async function renameItem(key,i,nv){nv=(nv||'').trim();
   if(key==='ex'){const x=S.exercises.find(y=>y.id===i);if(x&&nv){x.n=nv;await saveSettings()}return}
   const L=S[LKEY[key][0]],old=L[i];if(!nv||nv===old)return;if(L.includes(nv))return toast('Такой вариант уже есть');
-  L[i]=nv;const f=key==='causes'?'causes':'dayType';
+  L[i]=nv;const f=LFIELD[key];
   if(key==='causes'){if(old===DRIVE())S.driveC=nv;const a=ARM_CAUSES().slice(),k=a.indexOf(old);if(k>=0){a[k]=nv;S.armC=a}}
   await saveSettings();let n=0;for(const e of E.values()){const arr=e[f];if(arr?.includes(old)){e[f]=arr.map(x=>x===old?nv:x);await DB.put(e);n++}}
   toast(n?`Переименовано, записей обновлено: ${n}`:'Переименовано')}
@@ -984,17 +1013,24 @@ async function pasteHealth(){
   if(!/(sl|steps|rhr|w)=/.test(txt)){ui.pasteBox=true;rr();return}
   if(applyParams(new URLSearchParams(txt.slice(txt.indexOf('?')+1).trim()),false)){clearClip();rr()}else toast('В буфере нет данных из «Здоровья»');
 }
+function wkDist(v,k){v=String(v||'').trim();if(!v)return '';const n=parseNum(v.replace(/[^\d.,]/g,''));if(n==null||!n)return '';const low=v.toLowerCase();let km=/км|km/.test(low)?n:/(^|[^к])м\b|\bm\b|meter|метр/.test(low)?n/1000:n>200?n/1000:n;
+  return k==='swim'||km<1?`${Math.round(km*1000)} м`:`${dec(Math.round(km*100)/100)} км`}
+function wkTime(v){v=String(v||'').trim();if(!v)return '';let sec=durTok(v);if(sec==null)return v;if(/^\d+([.,]\d+)?$/.test(v)&&sec<600)sec*=60;const m=Math.round(sec/60);return m>=60?`${Math.floor(m/60)} ч ${String(m%60).padStart(2,'0')} мин`:`${m} мин`}
 function durTok(t){t=String(t).trim().toLowerCase();if(!t)return null;let m=t.match(/^(\d+):(\d{1,2})(?::(\d{1,2}))?$/);if(m)return m[3]!=null?(+m[1])*3600+(+m[2])*60+(+m[3]):(+m[1])*60+(+m[2])*1;
   if(/[чhмms]/.test(t)){let sec=0,f=false;for(const[re,mul]of[[/(\d+[.,]?\d*)\s*(ч|h)/,3600],[/(\d+[.,]?\d*)\s*(мин|m(?!s))/,60],[/(\d+[.,]?\d*)\s*(с|сек|s)\b/,1]]){const x=t.match(re);if(x){sec+=parseFloat(x[1].replace(',','.'))*mul;f=true}}return f?sec:null}
   const v=parseNum(t);return v==null?null:v}
 function stageOf(v){v=String(v).trim().toLowerCase();if(/awake|бодр/.test(v))return'awake';if(/in ?bed|кроват/.test(v))return'inbed';if(/deep|глубок/.test(v))return'deep';if(/rem|быстр/.test(v))return'rem';if(/core|базов|asleep|unspec|сон/.test(v))return'core';return null}
 function parseDT(v){const d=parseDay(v);if(!d)return null;const m=String(v).match(/(\d{1,2}):(\d{2})(?::\d{2})?\s*(am|pm|ам|пм)?/i);let hh=m?+m[1]:0;const mm=m?+m[2]:0;if(m&&m[3]){const pmm=/p|п/i.test(m[3]);if(pmm&&hh<12)hh+=12;if(!pmm&&hh===12)hh=0}const x=pd(d);x.setHours(hh,mm,0,0);return x.getTime()}
 function parseStages(str,target){const [a,b,c]=String(str).split('|');if(!a||!b)return null;const sp=x=>x.split(/[;\n]/).map(y=>y.trim()).filter(Boolean);let ph=sp(a),durRaw=sp(b);let du=durRaw.map(durTok);if(!ph.length||ph.length!==du.length)return null;
-  if(c&&target){const st=sp(c).map(parseDT);if(st.length===ph.length){const t0=pd(addDays(target,-1)).getTime()+18*36e5,t1=pd(target).getTime()+12*36e5;const keep=st.map(x=>x!=null&&x>=t0&&x<t1);ph=ph.filter((_,i)=>keep[i]);durRaw=durRaw.filter((_,i)=>keep[i]);du=du.filter((_,i)=>keep[i]);if(!ph.length)return{none:true}}}
+  let st=null;
+  if(c&&target){st=sp(c).map(parseDT);if(st.length===ph.length){const t0=pd(addDays(target,-1)).getTime()+18*36e5,t1=pd(target).getTime()+12*36e5;const keep=st.map(x=>x!=null&&x>=t0&&x<t1);ph=ph.filter((_,i)=>keep[i]);durRaw=durRaw.filter((_,i)=>keep[i]);du=du.filter((_,i)=>keep[i]);st=st.filter((_,i)=>keep[i]);if(!ph.length)return{none:true}}else st=null}
   const b2=durRaw;
   let numOnly=b2.every(x=>/^\d+([.,]\d+)?$/.test(x)),tot=du.reduce((s,x)=>s+(x||0),0);const k=numOnly&&tot<1500?60:1;const acc={deep:0,rem:0,core:0,awake:0,inbed:0};
   ph.forEach((p,i)=>{const st=stageOf(p);if(st&&du[i]!=null)acc[st]+=du[i]*k});const sleep=acc.deep+acc.rem+acc.core;if(!sleep)return null;
-  return{sl:Math.round(sleep/36)/100,deep:Math.round(acc.deep/60),rem:Math.round(acc.rem/60),core:Math.round(acc.core/60),awake:Math.round(acc.awake/60)}}
+  let bedT=null,wakeT=null,wakes=0,awin=null;
+  if(st){const seg=ph.map((p,i)=>({s:st[i],e:st[i]!=null&&du[i]!=null?st[i]+du[i]*k*1000:null,t:stageOf(p)})).filter(x=>x.s!=null&&x.e!=null&&x.t&&x.t!=='inbed');
+    const sl=seg.filter(x=>x.t!=='awake');if(sl.length){bedT=Math.min(...sl.map(x=>x.s));wakeT=Math.max(...sl.map(x=>x.e));const aw=seg.filter(x=>x.t==='awake'&&x.s>=bedT&&x.e<=wakeT);wakes=aw.length;awin=Math.round(aw.reduce((a,x)=>a+(x.e-x.s),0)/60000)}}
+  return{sl:Math.round(sleep/36)/100,deep:Math.round(acc.deep/60),rem:Math.round(acc.rem/60),core:Math.round(acc.core/60),awake:Math.round(acc.awake/60),bedT,wakeT,wakes,awin}}
 function parseDay(v){if(!v)return null;v=String(v).trim().toLowerCase();let m=v.match(/(\d{4})-(\d{2})-(\d{2})/);if(m)return m[0];
   m=v.match(/(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})/);if(m)return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
   const M=['янв','фев','мар','апр','ма','июн','июл','авг','сен','окт','ноя','дек'];m=v.match(/(\d{1,2})\s+([а-яё]+)\.?\s+(\d{4})/);
@@ -1007,9 +1043,10 @@ function applyParams(p,fromUrl,silent){
   for(const k of['km','w','resp'])set(k,p.has(k)?rn(p.get(k),100):null);
   {const t=p.has('wtemp')?parseNum(p.get('wtemp')):null;if(t!=null){if(t>30)set('wt',Math.round(t*100)/100);else set('wtemp',Math.round(t*100)/100)}}
   {const sy=parseNum(p.get('bps')),di=parseNum(p.get('bpd'));if(sy&&di){e.bp=(e.bp||[]).filter(r=>r.src!=='Здоровье');e.bp.push({sys:Math.round(sy),dia:Math.round(di),t:'',src:'Здоровье'});n++}}
-  if(p.get('sl2')){const r=parseStages(p.get('sl2'),date);if(r?.none){setTimeout(()=>toast('Сна за эту ночь не найдено'),600)}else if(r){for(const k of['deep','rem','core','awake'])if(!man[k])h[k]=r[k];if(!man.sl){h.sl=r.sl;n++}}}
+  if(p.get('sl2')){const r=parseStages(p.get('sl2'),date);if(r?.none){setTimeout(()=>toast('Сна за эту ночь не найдено'),600)}else if(r){for(const k of['deep','rem','core','awake'])if(!man[k])h[k]=r[k];if(!man.sl){h.sl=r.sl;n++}
+      if(r.bedT!=null){const hm=t=>new Date(t).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});h.bed=hm(r.bedT);h.wake=hm(r.wakeT);h.bedm=Math.round((r.bedT-(pd(addDays(date,-1)).getTime()+18*36e5))/60000);h.wakes=r.wakes;h.awin=r.awin}}}
   if(p.get('bed'))h.bed=p.get('bed');if(p.get('wake'))h.wake=p.get('wake');
-  if(p.get('wk')){e.workouts=e.workouts.filter(w=>w.src!=='Здоровье');for(const s of p.get('wk').split(';')){const[type,dist,time]=s.split('|');if(!type)continue;const k=wkType(type);e.workouts.push({type:k,t:k==='other'?type.trim():WK[k][0],dist:dist||'',time:time||'',src:'Здоровье'})}n++}
+  if(p.get('wk')){e.workouts=e.workouts.filter(w=>w.src!=='Здоровье');for(const s of p.get('wk').split(';')){const[type,dist,time]=s.split('|');if(!type)continue;const k=wkType(type);e.workouts.push({type:k,t:k==='other'?type.trim():WK[k][0],dist:wkDist(dist,k),time:wkTime(time),src:'Здоровье'})}n++}
   if(n){h.src='Команда · '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});saveEntry(e);if(!silent){const moved=dd&&dd!==ui.date;ui.date=date;const dt=pd(date);setTimeout(()=>toast(moved?`Данные за ${dt.getDate()} ${MON[dt.getMonth()]} записаны в свой день`:dd?`Данные за ${dt.getDate()} ${MON[dt.getMonth()]} добавлены`:'Данные добавлены. В строке нет даты: добавь &d= в Команду'),300)}}
   return n;
 }
@@ -1069,6 +1106,8 @@ async function onClick(ev){
   if('bpopen' in ds){ui.bpOpen=!ui.bpOpen;return rr()}
   if('bpadd' in ds){const sy=parseNum($('bpS').value),di=parseNum($('bpD').value),pu=parseNum($('bpP').value);if(!sy||!di)return toast('Впиши верхнее и нижнее');e.bp=[...(e.bp||[]),{sys:Math.round(sy),dia:Math.round(di),...(pu?{pulse:Math.round(pu)}:{}),t:ui.date===todayISO()?nowHM():''}];saveEntry(e);return rr()}
   if(ds.delbp!=null){e.bp.splice(+ds.delbp,1);saveEntry(e);return rr()}
+  if(ds.manageGo){ui.tab='more';ui.manage=ds.manageGo;scrollTo(0,0);return render()}
+  if(ds.ladd){const el=$('lAddIn'),v=el?.value.trim();const L=S[LKEY[ds.ladd][0]];if(v&&!L.includes(v)){L.push(v);await saveSettings()}return rr()}
   if(ds.lren){ui.lEdit=ds.lren+':'+ds.li;rr();const el=$('lIn');if(el){el.focus();el.select()}return}
   if(ds.lmv){const L=S[LKEY[ds.lmv][0]],i=+ds.li,j=i+ +ds.d;if(j>=0&&j<L.length){[L[i],L[j]]=[L[j],L[i]];await saveSettings()}return rr()}
   if(ds.ldelask){ui.delL=ds.ldelask+':'+ds.li;return rr()}
@@ -1160,7 +1199,7 @@ async function start(){
   document.addEventListener('paste',ev=>{if(ev.target.id!=='pasteIn')return;const v=(ev.clipboardData||window.clipboardData)?.getData('text')||'';if(!v)return;ev.preventDefault();ui.pasteBox=false;if(!applyParams(new URLSearchParams(v.slice(v.indexOf('?')+1).trim()),false))toast('Не нашёл данных в тексте');else clearClip();rr()});
   document.addEventListener('focusout',async ev=>{if(ev.target.id==='exIn')commitEx(ev.target);if(ev.target.id==='lIn'&&!commitL.busy)commitL(ev.target)});
   document.addEventListener('change',ev=>{if((ev.target.id==='importFile'||ev.target.id==='importFile2')&&ev.target.files[0])doImport(ev.target.files[0])});
-  document.addEventListener('keydown',ev=>{if(ev.key==='Enter'&&(ev.target.id==='exIn'||ev.target.id==='lIn')){ev.preventDefault();ev.target.blur()}if(ev.key==='Enter'&&ev.target.id==='causeIn'){ev.preventDefault();document.querySelector('[data-causesave]')?.click()}if(ev.key==='Enter'&&ev.target.id==='dtIn'){ev.preventDefault();document.querySelector('[data-dtsave]')?.click()}if(ev.key==='Enter'&&ev.target.id==='emoIn'){ev.preventDefault();document.querySelector('[data-emosave]')?.click()}});
+  document.addEventListener('keydown',ev=>{if(ev.key==='Enter'&&(ev.target.id==='exIn'||ev.target.id==='lIn')){ev.preventDefault();ev.target.blur()}if(ev.key==='Enter'&&ev.target.id==='causeIn'){ev.preventDefault();document.querySelector('[data-causesave]')?.click()}if(ev.key==='Enter'&&ev.target.id==='lAddIn'){ev.preventDefault();document.querySelector('[data-ladd]')?.click()}if(ev.key==='Enter'&&ev.target.id==='dtIn'){ev.preventDefault();document.querySelector('[data-dtsave]')?.click()}if(ev.key==='Enter'&&ev.target.id==='emoIn'){ev.preventDefault();document.querySelector('[data-emosave]')?.click()}});
   setInterval(()=>{const hm=nowHM();if(ui.tab==='today'&&hm!==ui.lastHM&&!document.activeElement?.matches('input,textarea')){ui.lastHM=hm;rr()}},20000);
   matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',()=>{applyAccent();rr()});
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){const t=todayISO();if(ui.date>t)ui.date=t;if(ui.tab==='today'){rr();if(ui.awaitPaste)setTimeout(()=>toast('Нажми «Вставить данные»'),300)}}});
