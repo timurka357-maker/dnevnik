@@ -460,6 +460,20 @@ input[type=time].medtime{display:inline-block;vertical-align:baseline;font:inher
 .exmb{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:0 0 11px;flex-wrap:wrap}
 .exmb .stepset{margin:0}
 .exmb .medact{gap:10px}
+
+/* ===== 3.3 · выше контраст ===== */
+:root{--ink:#0B0D10;--muted:#3F444D;--base-bg:#E2E5EA;--line:color-mix(in srgb,var(--a1) 14%,#C3C8D0);--card-2:color-mix(in srgb,var(--a1) 9%,#E3E6EB);--goal:#127F48}
+:root[data-accent="multi"]{--a1-l:#4040CF;--sleep:#4040CF;--move:#D2421B;--ex:#127F48;--weak:#A85F00;--rec:#08728A;--wt:#08728A;--exb:#127F48;
+  --c-watch:#08728A;--c-weak:#A85F00;--c-mood:#B8306F;--c-train:#127F48;--c-meds:#C02E33;--c-day:#5A36DB;--c-stool:#7E5226;--c-note:#4040CF;--c-sick:#C02E33;--c-waist:#D2421B;--c-good:#127F48;--c-mid:#A85F00;--c-bad:#C02E33}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#FFFFFF;--muted:#C2C7CF;--base-bg:#030405;--base-card:#1A1D23;--line:color-mix(in srgb,var(--a1) 14%,#3C414B);--card-2:color-mix(in srgb,var(--a1) 10%,#262A32);--goal:#3DDC8A}}
+:root[data-theme="dark"]{--ink:#FFFFFF;--muted:#C2C7CF;--base-bg:#030405;--base-card:#1A1D23;--line:color-mix(in srgb,var(--a1) 14%,#3C414B);--card-2:color-mix(in srgb,var(--a1) 10%,#262A32);--goal:#3DDC8A}
+.card,.hero{border:1px solid var(--line)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .card,:root:not([data-theme="light"]) .hero{border-color:var(--line)}}
+:root[data-theme="dark"] .card,:root[data-theme="dark"] .hero{border-color:var(--line)}
+[data-accent="multi"] .card[data-sec]{background:linear-gradient(180deg,color-mix(in srgb,var(--sc) 6%,var(--card)),var(--card) 55%)}
+.chip{border-width:1.5px}
+.ch .aside,.sub,.s,.tab,.ring .l{color:var(--muted)}
+.tab[aria-selected="true"]{color:var(--a1)}
 </style>
 </head>
 <body>
@@ -470,7 +484,7 @@ input[type=time].medtime{display:inline-block;vertical-align:baseline;font:inher
 <script>
 'use strict';
 /* ===== Дневник восстановления · данные хранятся только на этом устройстве (IndexedDB) ===== */
-const APP_VERSION = '3.2';
+const APP_VERSION = '3.3';
 const MON=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 const MONN=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 const WD=['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'], WDS=['вс','пн','вт','ср','чт','пт','сб'];
@@ -561,15 +575,15 @@ const ARM_CAUSES=()=>S.armC||ARM_DEF;
 const DRIVE=()=>S.driveC||'Руль';
 
 /* ---------- оценка сна (своя, по схеме Apple: длительность 50 + режим 30 + пробуждения 20) ---------- */
-const SBAND=s=>s>=96?'отлично':s>=81?'очень хорошо':s>=71?'хорошо':s>=51?'нормально':'плохо';
+const SBAND=s=>s>=96?'отлично':s>=81?'хорошо':s>=71?'нормально':s>=41?'плохо':'очень плохо';
 function sleepStats(e){const h=e?.health||{};if(!h.sl)return null;const hasSt=h.deep!=null||h.core!=null||h.rem!=null;if(!hasSt)return null;
   const sm=h.sl*60,aw=h.awin??h.awake??0;const eff=Math.round(sm/(sm+aw)*100);
-  const dur=Math.min(50,50*Math.pow(h.sl/S.goals.sleep,2));
+  const dur=Math.max(0,Math.min(50,50*(h.sl-3.5)/3.75));
   let reg=15,regTxt='нет времени отбоя';
   if(h.bedm!=null){const hist=[];for(let i=1;i<=14;i++){const x=E.get(addDays(e.date,-i))?.health;if(x?.bedm!=null)hist.push(x.bedm)}
-    if(hist.length>=3){hist.sort((a,b)=>a-b);const med=hist[hist.length>>1];const dev=Math.abs(h.bedm-med);reg=dev<=30?30:dev>=150?0:30*(150-dev)/120;regTxt=dev<=30?'лёг как обычно':`лёг ${h.bedm>med?'позже':'раньше'} обычного на ${fmtMin(dev)}`}
+    if(hist.length>=3){hist.sort((a,b)=>a-b);const med=hist[hist.length>>1];const diff=h.bedm-med,dev=diff>0?diff:Math.max(0,-diff-60);reg=dev<=30?30:dev>=150?0:30*(150-dev)/120;regTxt=Math.abs(diff)<=15?'лёг как обычно':`лёг ${diff>0?'позже':'раньше'} обычного на ${fmtMin(Math.abs(diff))}`}
     else{const dev=Math.max(0,Math.abs(h.bedm-300)-60);reg=dev>=120?0:30*(120-dev)/120;regTxt='сравню с обычным временем, когда накопится 3 ночи'}}
-  const wk=h.wakes??0;const intr=Math.max(0,Math.min(20,20-Math.max(0,aw-5)/3-Math.max(0,wk-2)*2));
+  const wk=h.wakes??0;const intr=Math.max(0,Math.min(20,20-Math.max(0,aw-5)/4));
   const score=Math.round(dur)+Math.round(reg)+Math.round(intr);return{eff,score,band:SBAND(score),dur:Math.round(dur),reg:Math.round(reg),intr:Math.round(intr),regTxt,aw,wk}}
 function sleepBox(e){const x=sleepStats(e);if(!x)return '';const r=18,c=2*Math.PI*r,p=x.score/100;
   return `<div class="sbox"><div class="sscore"><svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="${r}" fill="none" stroke="var(--sleep)" stroke-opacity=".16" stroke-width="5"/><circle cx="22" cy="22" r="${r}" fill="none" stroke="var(--sleep)" stroke-width="5" stroke-linecap="round" stroke-dasharray="${(c*p).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 22 22)"/></svg><b class="num">${x.score}</b></div>
