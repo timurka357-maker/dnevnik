@@ -484,7 +484,7 @@ input[type=time].medtime{display:inline-block;vertical-align:baseline;font:inher
 <script>
 'use strict';
 /* ===== Дневник восстановления · данные хранятся только на этом устройстве (IndexedDB) ===== */
-const APP_VERSION = '3.3';
+const APP_VERSION = '3.4';
 const MON=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 const MONN=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 const WD=['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'], WDS=['вс','пн','вт','ср','чт','пт','сб'];
@@ -583,7 +583,7 @@ function sleepStats(e){const h=e?.health||{};if(!h.sl)return null;const hasSt=h.
   if(h.bedm!=null){const hist=[];for(let i=1;i<=14;i++){const x=E.get(addDays(e.date,-i))?.health;if(x?.bedm!=null)hist.push(x.bedm)}
     if(hist.length>=3){hist.sort((a,b)=>a-b);const med=hist[hist.length>>1];const diff=h.bedm-med,dev=diff>0?diff:Math.max(0,-diff-60);reg=dev<=30?30:dev>=150?0:30*(150-dev)/120;regTxt=Math.abs(diff)<=15?'лёг как обычно':`лёг ${diff>0?'позже':'раньше'} обычного на ${fmtMin(Math.abs(diff))}`}
     else{const dev=Math.max(0,Math.abs(h.bedm-300)-60);reg=dev>=120?0:30*(120-dev)/120;regTxt='сравню с обычным временем, когда накопится 3 ночи'}}
-  const wk=h.wakes??0;const intr=Math.max(0,Math.min(20,20-Math.max(0,aw-5)/4));
+  const wk=h.wakes??0;const intr=Math.max(0,Math.min(20,20-Math.max(0,wk-3)));
   const score=Math.round(dur)+Math.round(reg)+Math.round(intr);return{eff,score,band:SBAND(score),dur:Math.round(dur),reg:Math.round(reg),intr:Math.round(intr),regTxt,aw,wk}}
 function sleepBox(e){const x=sleepStats(e);if(!x)return '';const r=18,c=2*Math.PI*r,p=x.score/100;
   return `<div class="sbox"><div class="sscore"><svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="${r}" fill="none" stroke="var(--sleep)" stroke-opacity=".16" stroke-width="5"/><circle cx="22" cy="22" r="${r}" fill="none" stroke="var(--sleep)" stroke-width="5" stroke-linecap="round" stroke-dasharray="${(c*p).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 22 22)"/></svg><b class="num">${x.score}</b></div>
