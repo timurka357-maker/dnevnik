@@ -484,7 +484,7 @@ input[type=time].medtime{display:inline-block;vertical-align:baseline;font:inher
 <script>
 'use strict';
 /* ===== Дневник восстановления · данные хранятся только на этом устройстве (IndexedDB) ===== */
-const APP_VERSION = '3.4';
+const APP_VERSION = '3.5';
 const MON=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 const MONN=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 const WD=['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'], WDS=['вс','пн','вт','ср','чт','пт','сб'];
@@ -578,7 +578,7 @@ const DRIVE=()=>S.driveC||'Руль';
 const SBAND=s=>s>=96?'отлично':s>=81?'хорошо':s>=71?'нормально':s>=41?'плохо':'очень плохо';
 function sleepStats(e){const h=e?.health||{};if(!h.sl)return null;const hasSt=h.deep!=null||h.core!=null||h.rem!=null;if(!hasSt)return null;
   const sm=h.sl*60,aw=h.awin??h.awake??0;const eff=Math.round(sm/(sm+aw)*100);
-  const dur=Math.max(0,Math.min(50,50*(h.sl-3.5)/3.75));
+  const dur=h.sl>=8.25?50:Math.max(0,50-3.12*Math.pow(8.25-h.sl,2));
   let reg=15,regTxt='нет времени отбоя';
   if(h.bedm!=null){const hist=[];for(let i=1;i<=14;i++){const x=E.get(addDays(e.date,-i))?.health;if(x?.bedm!=null)hist.push(x.bedm)}
     if(hist.length>=3){hist.sort((a,b)=>a-b);const med=hist[hist.length>>1];const diff=h.bedm-med,dev=diff>0?diff:Math.max(0,-diff-60);reg=dev<=30?30:dev>=150?0:30*(150-dev)/120;regTxt=Math.abs(diff)<=15?'лёг как обычно':`лёг ${diff>0?'позже':'раньше'} обычного на ${fmtMin(Math.abs(diff))}`}
@@ -1043,7 +1043,7 @@ function parseStages(str,target){const [a,b,c]=String(str).split('|');if(!a||!b)
   ph.forEach((p,i)=>{const st=stageOf(p);if(st&&du[i]!=null)acc[st]+=du[i]*k});const sleep=acc.deep+acc.rem+acc.core;if(!sleep)return null;
   let bedT=null,wakeT=null,wakes=0,awin=null;
   if(st){const seg=ph.map((p,i)=>({s:st[i],e:st[i]!=null&&du[i]!=null?st[i]+du[i]*k*1000:null,t:stageOf(p)})).filter(x=>x.s!=null&&x.e!=null&&x.t&&x.t!=='inbed');
-    const sl=seg.filter(x=>x.t!=='awake');if(sl.length){bedT=Math.min(...sl.map(x=>x.s));wakeT=Math.max(...sl.map(x=>x.e));const aw=seg.filter(x=>x.t==='awake'&&x.s>=bedT&&x.e<=wakeT);wakes=aw.length;awin=Math.round(aw.reduce((a,x)=>a+(x.e-x.s),0)/60000)}}
+    const sl=seg.filter(x=>x.t!=='awake');if(sl.length){bedT=Math.min(...sl.map(x=>x.s));wakeT=Math.max(...sl.map(x=>x.e));const aw=seg.filter(x=>x.t==='awake'&&x.s>=bedT&&x.e<=wakeT);wakes=seg.filter(x=>x.t==='awake').length;awin=Math.round(aw.reduce((a,x)=>a+(x.e-x.s),0)/60000)}}
   return{sl:Math.round(sleep/36)/100,deep:Math.round(acc.deep/60),rem:Math.round(acc.rem/60),core:Math.round(acc.core/60),awake:Math.round(acc.awake/60),bedT,wakeT,wakes,awin}}
 function parseDay(v){if(!v)return null;v=String(v).trim().toLowerCase();let m=v.match(/(\d{4})-(\d{2})-(\d{2})/);if(m)return m[0];
   m=v.match(/(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})/);if(m)return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
